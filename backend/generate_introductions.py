@@ -14,14 +14,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Libras Teaching API")
 
-# Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 load_dotenv()
 

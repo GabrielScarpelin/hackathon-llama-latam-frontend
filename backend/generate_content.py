@@ -46,14 +46,6 @@ llm = LLM(
 # Inicialização do FastAPI
 app = FastAPI(title="Content and Image Generator API")
 
-# Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Modelos Pydantic
 class ContentGenerationRequest(BaseModel):

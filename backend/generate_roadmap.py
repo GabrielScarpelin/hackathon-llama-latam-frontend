@@ -12,14 +12,7 @@ load_dotenv()
 # Inicializar FastAPI
 app = FastAPI()
 
-# Configurar CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Permitir todas as origens (configure conforme necessário)
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 # Configurar o LLM
 llm = LLM(
