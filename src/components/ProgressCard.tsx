@@ -22,7 +22,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
 
   return (
     <Link href={href}>
-      <div className={`bg-gradient-to-r ${gradient} text-white p-6 rounded-xl w-full`}>
+      <div className={`bg-gradient-to-r ${gradient} text-white p-6 rounded-xl  w-full`}>
         <h2 className="text-lg font-bold uppercase mb-4">{title}</h2>
         <div>
           <div className="flex items-center justify-between mb-2">

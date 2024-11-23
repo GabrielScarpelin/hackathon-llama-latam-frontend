@@ -50,11 +50,11 @@ export default function Sentencedynamic() {
   };
 
   return (
-  <div className="rounded-3xl p-2 w-full max-w-lg mx-auto flex flex-col h-[500px]">
+  <div className="rounded-3xl p-2 w-full  flex flex-col h-[500px] px-10">
     <h1 className="text-2xl font-bold text-center mb-1">Dinâmica de palavras</h1>
 
     {/* Texto atual em negrito */}
-    <div className="mb-3" onClick={() => {
+    <div className="" onClick={() => {
       if (player) {
         // @ts-expect-error - the object is never because it's not defined in the global scope
         player.translate(currentWord);
@@ -66,9 +66,9 @@ export default function Sentencedynamic() {
     </div>
 
     {/* Contêiner das imagens */}
-    <div className="flex gap-8 items-center mb-0">
+    <div className="flex gap-8 items-center mt-4 mb-0">
       {/* Primeira imagem maior */}
-      <div className="w-60 h-60 bg-gray-200 rounded-2xl flex-shrink-0">
+      <div className="w-80 h-80 bg-gray-200 rounded-2xl flex-shrink-0">
         {isLoading ? (
           <div className=" bg-gray-200 rounded-2xl animate-pulse" />
         ) : currentImage ? (
