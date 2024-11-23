@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import logging
 import requests
+from dotenv import load_dotenv
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -21,6 +22,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+load_dotenv()
 
 # LLM Configuration
 SAMBANOVA_API_KEY = os.environ.get('SAMBANOVA_API_KEY')
