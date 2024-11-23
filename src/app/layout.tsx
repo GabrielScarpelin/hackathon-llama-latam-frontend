@@ -1,15 +1,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import Script from "next/script";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
+const baloo2 = localFont({
+  src: "./fonts/Baloo2-VariableFont_wght.ttf",
+  variable: "--font-baloo-2",
   weight: "100 900",
 });
 
@@ -24,11 +20,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${baloo2.className} antialiased`}
       >
         {children}
+        <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+        <Script
+          src="https://vlibras.gov.br/app/vlibras-plugin.js"
+          strategy="afterInteractive" // Ensure the script loads after the page is interactive
+        />
       </body>
     </html>
   );
