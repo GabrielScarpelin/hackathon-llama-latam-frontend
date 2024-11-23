@@ -1,74 +1,40 @@
-// src/components/ProgressCard.jsx
 import React from 'react';
-import styled from 'styled-components';
 
-const Card = styled.div`
-  background: linear-gradient(90deg, #ff7cf4, #9188fc);
-  color: white;
-  padding: 20px;
-  border-radius: 16px;
-  width: 300px;
-  position: relative;
-  font-family: 'Arial', sans-serif;
-`;
+interface ProgressCardProps {
+  title: string;
+  current: number;
+  total: number;
+  gradient?: string; // Classe do Tailwind para gradiente de fundo
+  progressBarColor?: string; // Classe do Tailwind para cor da barra de progresso
+}
 
-const Title = styled.h2`
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 10px;
-  text-transform: uppercase;
-`;
-
-const ProgressContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
-const Label = styled.span`
-  font-size: 14px;
-`;
-
-const ProgressBar = styled.div`
-  background-color: #d3d3d3;
-  height: 10px;
-  border-radius: 5px;
-  overflow: hidden;
-  position: relative;
-`;
-
-const ProgressFill = styled.div`
-  background-color: #4c3bff;
-  height: 100%;
-  width: ${({ percentage }) => percentage}%;
-  transition: width 0.3s ease;
-`;
-
-const ProgressText = styled.div`
-  font-size: 14px;
-  font-weight: bold;
-  text-align: right;
-  margin-top: 5px;
-`;
-
-const ProgressCard = ({ title, current, total } : {
-    title: string;
-    current: number;
-    total: number;
+const ProgressCard: React.FC<ProgressCardProps> = ({
+  title,
+  current,
+  total,
+  gradient = 'from-pink-400 to-purple-500', // Gradiente padrão
+  progressBarColor = 'bg-indigo-600', // Cor padrão da barra de progresso
 }) => {
   const percentage = (current / total) * 100;
 
   return (
-    <Card>
-      <Title>{title}</Title>
-      <ProgressContainer>
-        <Label>Progresso</Label>
-        <ProgressBar>
-          <ProgressFill percentage={percentage} />
-        </ProgressBar>
-        <ProgressText>{`${current}/${total}`}</ProgressText>
-      </ProgressContainer>
-    </Card>
+    <div className={`bg-gradient-to-r ${gradient} text-white p-6 rounded-xl w-full`}>
+      <h2 className="text-lg font-bold uppercase mb-4">{title}</h2>
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm block">Progresso</span>
+          <div className="text-right text-sm font-bold">
+            {`${current}/${total}`}
+          </div>
+        </div>
+        <div className="w-full bg-gray-300 h-3 rounded-full overflow-hidden">
+          <div
+            className={`${progressBarColor} h-full transition-all duration-300`}
+            style={{ width: `${percentage}%` }}
+          ></div>
+        </div>
+      </div>
+    </div>
   );
 };
 
