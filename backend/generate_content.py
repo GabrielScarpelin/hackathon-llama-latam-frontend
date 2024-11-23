@@ -29,7 +29,7 @@ BATCH_SIZE = 10
 REQUEST_TIMEOUT = 30
 
 # Inicialização do Firebase
-cred = credentials.Certificate('fluxo/credentials.json')
+cred = credentials.Certificate('credentials.json')
 firebase_app = initialize_app(cred)
 db = firestore.client()
 
