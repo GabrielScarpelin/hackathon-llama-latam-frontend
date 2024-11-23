@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 
 export default function HomeIcon({isActive, ...props} : {
     isActive?: boolean;
-    [x: string]: any;
 }) {
     const baseScreenWidth = 1440;
     const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);

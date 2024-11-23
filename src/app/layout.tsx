@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -25,11 +26,6 @@ export default function RootLayout({
         className={`${baloo2.className} antialiased`}
       >
         {children}
-        <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
-        <Script
-          src="https://vlibras.gov.br/app/vlibras-plugin.js"
-          strategy="afterInteractive" // Ensure the script loads after the page is interactive
-        />
       </body>
     </html>
   );
