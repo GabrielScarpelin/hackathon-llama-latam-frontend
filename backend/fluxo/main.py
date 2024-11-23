@@ -4,16 +4,16 @@ import asyncio
 import aiohttp
 import logging
 from typing import Dict, List, Tuple, Optional
+from datetime import datetime
 from dotenv import load_dotenv
-from contextlib import asynccontextmanager
-from aiosqlite import connect as aio_connect
+from firebase_admin import credentials, initialize_app, firestore
 from crewai import Agent, Task, Crew, LLM
 
 # Configuração de logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
-)     
+)
 logger = logging.getLogger(__name__)
 
 # Carrega variáveis de ambiente
@@ -26,6 +26,11 @@ MAX_CONCURRENT_REQUESTS = 5
 BATCH_SIZE = 10
 REQUEST_TIMEOUT = 30
 
+# Inicialização do Firebase
+cred = credentials.Certificate('credentials.json')
+firebase_app = initialize_app(cred)
+db = firestore.client()
+
 # Configuração do modelo LLM
 llm = LLM(
     model="sambanova/Meta-Llama-3.1-8B-Instruct",
@@ -36,42 +41,33 @@ llm = LLM(
     top_p=0.9
 )
 
+
+# Classe para Gerar Imagens
 class ImageGenerator:
-    def __init__(self, db_path: str = "imagens.db"):
-        self.db_path = db_path
+    def __init__(self):
         self.headers = {
             "Authorization": f"Bearer {API_TOKEN}",
             "Content-Type": "application/json"
         }
         self.semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
-        # Prompt padrão para estilo infantil
-        self.base_prompt = "Create a cute, simple 2D cartoon with bright colors, rounded shapes and minimal details, showing: "
+    
     def format_prompt(self, prompt: str) -> str:
-        """Combina o prompt base com o prompt específico"""
-        return f"{self.base_prompt} {prompt}. Make it simple and easily recognizable for children."
-
-    @asynccontextmanager
-    async def get_db_connection(self):
-        """Gerenciador de contexto assíncrono para conexão com o banco"""
-        db = await aio_connect(self.db_path)
-        try:
-            await db.execute("""
-                CREATE TABLE IF NOT EXISTS imagens (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    tipo TEXT,
-                    texto_pt TEXT,
-                    texto_en TEXT,
-                    url TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            await db.commit()
-            yield db
-        finally:
-            await db.close()
+        """Formata o prompt base."""
+        base_prompt = """
+        Create a cheerful, child-friendly illustration with the following characteristics:
+        - Cute and simple cartoon style
+        - Vibrant and bright colors
+        - Soft edges and rounded shapes
+        - Clean and clear composition
+        - Safe and appropriate for young children
+        - Simple background with minimal details
+        - 2D style with minimal shading
+        
+        The illustration should show: """
+        return f"{base_prompt} {prompt}. Make it simple and easily recognizable for children."
 
     async def generate_single_image(self, session: aiohttp.ClientSession, prompt: str) -> Optional[str]:
-        """Gera uma única imagem de forma assíncrona usando texto em inglês"""
+        """Gera uma única imagem a partir do prompt."""
         async with self.semaphore:
             formatted_prompt = self.format_prompt(prompt)
             data = {
@@ -83,7 +79,7 @@ class ImageGenerator:
 
             try:
                 async with session.post(BASE_URL, headers=self.headers, json=data, timeout=REQUEST_TIMEOUT) as response:
-                    if response.status == 429:
+                    if response.status == 429:  # Rate limit
                         await asyncio.sleep(1)
                         return await self.generate_single_image(session, prompt)
                     
@@ -100,50 +96,71 @@ class ImageGenerator:
                 logger.error(f"Erro ao gerar imagem para '{prompt}': {e}")
                 return None
 
-    async def save_batch_to_db(self, db, batch: List[Tuple[str, str, str, str]]):
-        """Salva um lote de dados no banco de forma assíncrona"""
+    async def process_items(self, session: aiohttp.ClientSession, items: List[Tuple[str, str]], tipo: str) -> List[Dict[str, str]]:
+        """Processa uma lista de itens (palavras ou frases) para gerar imagens."""
+        tasks = [self.generate_single_image(session, item[1]) for item in items]
+        urls = await asyncio.gather(*tasks)
+        return [
+            {"tipo": tipo, "texto_pt": item[0], "texto_en": item[1], "url": url}
+            for item, url in zip(items, urls) if url
+        ]
+
+    async def save_images_to_collection(self, user_id: str, collection_id: str, images: List[Dict[str, str]]):
+        """Salva as imagens na coleção do usuário no Firestore."""
         try:
-            await db.executemany(
-                "INSERT INTO imagens (tipo, texto_pt, texto_en, url) VALUES (?, ?, ?, ?)",
-                batch
-            )
-            await db.commit()
+            collection_ref = db.collection('users').document(user_id).collection('collections').document(collection_id)
+            images_ref = collection_ref.collection('images')
+
+            batch_write = db.batch()
+            for image in images:
+                doc_ref = images_ref.document()
+                image['created_at'] = datetime.now()
+                batch_write.set(doc_ref, image)
+            
+            await asyncio.to_thread(batch_write.commit)
+            logger.info(f"{len(images)} imagens salvas na coleção '{collection_id}' do usuário '{user_id}'.")
         except Exception as e:
-            logger.error(f"Erro ao salvar lote no banco: {e}")
+            logger.error(f"Erro ao salvar imagens na coleção: {e}")
             raise
 
-    async def process_items(self, session: aiohttp.ClientSession, items: List[Tuple[str, str]], tipo: str) -> List[Tuple[str, str, str]]:
-        """Processa uma lista de items (palavras ou frases) em português e inglês"""
-        tasks = [self.generate_single_image(session, item[1]) for item in items]  # Usa versão em inglês
-        urls = await asyncio.gather(*tasks)
-        return [(item[0], item[1], url) for item, url in zip(items, urls) if url]
-
-    async def generate_images(self, data: Dict[str, List[Tuple[str, str]]]):
-        """Função principal para gerar imagens de forma assíncrona"""
-        async with aiohttp.ClientSession() as session, self.get_db_connection() as db:
+    async def generate_images_for_collection(self, user_id: str, collection_id: str, data: Dict[str, List[Tuple[str, str]]]):
+        """Gera imagens para uma coleção específica e salva no Firestore."""
+        async with aiohttp.ClientSession() as session:
             palavras_task = self.process_items(session, data["palavras"], "palavra")
             frases_task = self.process_items(session, data["frases"], "frase")
             
-            palavras_results, frases_results = await asyncio.gather(
-                palavras_task, 
-                frases_task
-            )
+            palavras_results, frases_results = await asyncio.gather(palavras_task, frases_task)
 
-            all_data = (
-                [("palavra", p[0], p[1], p[2]) for p in palavras_results] +  # pt, en, url
-                [("frase", f[0], f[1], f[2]) for f in frases_results]
-            )
+            all_images = palavras_results + frases_results
 
-            for i in range(0, len(all_data), BATCH_SIZE):
-                batch = all_data[i:i + BATCH_SIZE]
-                await self.save_batch_to_db(db, batch)
+            # Salva no Firestore
+            await self.save_images_to_collection(user_id, collection_id, all_images)
 
             logger.info(
-                f"Processamento concluído: {len(palavras_results)} palavras e "
-                f"{len(frases_results)} frases geradas"
+                f"Processamento concluído: {len(palavras_results)} palavras e {len(frases_results)} frases geradas."
             )
 
+
+# Função para Criar Coleção no Firestore
+async def create_collection(user_id: str, collection_title: str) -> str:
+    """Cria uma nova coleção para um usuário no Firestore."""
+    try:
+        collection_ref = db.collection('users').document(user_id).collection('collections').document()
+        collection_data = {
+            "title": collection_title,
+            "created_at": datetime.now()
+        }
+        collection_ref.set(collection_data)
+        logger.info(f"Coleção '{collection_title}' criada com ID: {collection_ref.id}")
+        return collection_ref.id
+    except Exception as e:
+        logger.error(f"Erro ao criar coleção: {e}")
+        raise
+
+
+# Funções Auxiliares Mantidas
 def create_agents():
+    """Cria agentes para geração de palavras e frases."""
     word_list_agent = Agent(
         role="Gerador de Lista de Palavras Bilíngue",
         goal="Gerar uma lista de palavras relacionadas a um tema em português e inglês",
@@ -162,18 +179,21 @@ def create_agents():
 
     return word_list_agent, sentence_agent
 
+
 def extract_json(text):
+    """Extrai JSON de uma string."""
     try:
         start_idx = text.find("{")
         end_idx = text.rfind("}")
         if start_idx != -1 and end_idx != -1 and start_idx < end_idx:
-            json_str = text[start_idx:end_idx + 1]
-            return json.loads(json_str)
+            return json.loads(text[start_idx:end_idx + 1])
     except json.JSONDecodeError as e:
-        print(f"Erro ao decodificar JSON: {e}")
+        logger.error(f"Erro ao decodificar JSON: {e}")
     return None
 
+
 def format_results(word_list_results, sentence_results):
+    """Formata os resultados em um formato padronizado."""
     word_list_json = extract_json(str(word_list_results))
     sentences_json = extract_json(str(sentence_results))
     
@@ -190,8 +210,10 @@ def format_results(word_list_results, sentence_results):
     
     return result
 
-async def generate_content_and_images(topic):
-    """Função principal que gera conteúdo bilíngue e imagens de forma assíncrona"""
+
+async def generate_content_and_images(topic: str, user_id: str, collection_id: str):
+    """Função principal que gera conteúdo e imagens de forma assíncrona."""
+    logger.info(f"Iniciando geração de conteúdo para o tema: {topic}")
     word_list_agent, sentence_agent = create_agents()
 
     # Task para lista de palavras
@@ -260,22 +282,32 @@ async def generate_content_and_images(topic):
 
     # Formata os resultados
     generated_data = format_results(word_list_result, sentences_result)
-    
-    # Gera as imagens de forma assíncrona usando o texto em inglês
+
+    # Gera as imagens e salva na coleção
     logger.info("Iniciando geração de imagens...")
     generator = ImageGenerator()
-    await generator.generate_images(generated_data)
+    await generator.generate_images_for_collection(user_id, collection_id, generated_data)
     
     return generated_data
 
+
 async def main():
-    topic = "Animais"  # Alterar o tema conforme necessário
+    """Função principal."""
+    user_id = "user123"  # ID do usuário
+    collection_title = "Coleção de Animais"  # Título da coleção
+    topic = "Animais"
+
     try:
-        generated_data = await generate_content_and_images(topic)
+        # Cria uma coleção para o usuário
+        collection_id = await create_collection(user_id, collection_title)
+
+        # Gera conteúdo e imagens
+        await generate_content_and_images(topic, user_id, collection_id)
+
         logger.info("Processo completo!")
-        logger.info(f"Dados gerados: {generated_data}")
     except Exception as e:
         logger.error(f"Erro durante o processo: {e}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
