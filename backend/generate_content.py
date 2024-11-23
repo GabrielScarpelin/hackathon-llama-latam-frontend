@@ -393,29 +393,71 @@ async def generate_image_endpoint(request: ImageGenerationRequest):
     except Exception as e:
         logger.error(f"Erro ao gerar imagem: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+@app.get("/collection/{user_id}/{collection_id}")
+async def get_collection_with_subcollections(user_id: str, collection_id: str):
+    """
+    Rota para obter uma coleção específica por ID, associada a um usuário, incluindo as subcoleções.
+    """
+    try:
+        # Referência ao documento da coleção específica
+        user_ref = db.collection('users').document(user_id)
+        collection_ref = user_ref.collection('collections').document(collection_id)
+        collection_doc = collection_ref.get()
 
-# Rota de get para pegar uma coleção específica por id parametro de rota
-@app.get("/collection/{collection_id}")
-async def get_collection(collection_id: str):
-    collection_ref = db.collection(collection_id)
-    collection = collection_ref.get()
-    collection_data = [doc.to_dict() for doc in collection]
-    return collection_data
+        if not collection_doc.exists:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Coleção {collection_id} não encontrada para o usuário {user_id}"
+            )
+
+        # Dados do documento principal
+        collection_data = collection_doc.to_dict()
+
+        # Buscar subcoleções do documento
+        subcollections_data = {}
+        subcollections = collection_ref.collections()  # Obtém todas as subcoleções
+        for subcollection in subcollections:
+            subcollection_name = subcollection.id
+            subcollection_docs = subcollection.stream()
+
+            # Extração de dados dos documentos na subcoleção
+            subcollections_data[subcollection_name] = [
+                {"doc_id": doc.id, **doc.to_dict()} for doc in subcollection_docs
+            ]
+
+        # Retornar dados do documento principal e suas subcoleções
+        return {
+            "collection_id": collection_id,
+            **collection_data,
+            "subcollections": subcollections_data,
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao buscar coleção {collection_id} para o usuário {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-# Rota para pegar todas as coleções de um usuário
 @app.get("/collections/user/{user_id}")
 async def get_user_collections(user_id: str):
-    user_ref = db.collection('users').document(user_id)
-    user_data = user_ref.get().to_dict()
-    user_collections = user_data.get('collections', [])
-    collections_data = []
-    for collection_id in user_collections:
-        collection_ref = db.collection(collection_id)
-        collection = collection_ref.get()
-        collection_data = [doc.to_dict() for doc in collection]
-        collections_data.append(collection_data)
-    return collections_data
+    """
+    Rota para obter todas as coleções de um usuário.
+    """
+    try:
+        # Acesse a subcoleção "collections" do usuário
+        user_ref = db.collection('users').document(user_id)
+        collections_ref = user_ref.collection('collections')
+        collections = collections_ref.stream()
+
+        # Extrai os dados de cada documento na coleção
+        collections_data = []
+        for collection in collections:
+            collections_data.append({"collection_id": collection.id, **collection.to_dict()})
+
+        return {"user_id": user_id, "collections": collections_data}
+
+    except Exception as e:
+        logger.error(f"Erro ao buscar coleções para o usuário {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 
