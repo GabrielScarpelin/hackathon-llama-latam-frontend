@@ -10,6 +10,7 @@ from firebase_admin import credentials, initialize_app, firestore
 from crewai import Agent, Task, Crew, LLM
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 # Configuração de logging
 logging.basicConfig(
@@ -44,6 +45,15 @@ llm = LLM(
 
 # Inicialização do FastAPI
 app = FastAPI(title="Content and Image Generator API")
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Modelos Pydantic
 class ContentGenerationRequest(BaseModel):
@@ -383,6 +393,31 @@ async def generate_image_endpoint(request: ImageGenerationRequest):
     except Exception as e:
         logger.error(f"Erro ao gerar imagem: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# Rota de get para pegar uma coleção específica por id parametro de rota
+@app.get("/collection/{collection_id}")
+async def get_collection(collection_id: str):
+    collection_ref = db.collection(collection_id)
+    collection = collection_ref.get()
+    collection_data = [doc.to_dict() for doc in collection]
+    return collection_data
+
+
+# Rota para pegar todas as coleções de um usuário
+@app.get("/collections/user/{user_id}")
+async def get_user_collections(user_id: str):
+    user_ref = db.collection('users').document(user_id)
+    user_data = user_ref.get().to_dict()
+    user_collections = user_data.get('collections', [])
+    collections_data = []
+    for collection_id in user_collections:
+        collection_ref = db.collection(collection_id)
+        collection = collection_ref.get()
+        collection_data = [doc.to_dict() for doc in collection]
+        collections_data.append(collection_data)
+    return collections_data
+
+
 
 if __name__ == "__main__":
     import uvicorn

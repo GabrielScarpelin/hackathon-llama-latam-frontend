@@ -1,6 +1,7 @@
 "use client";
 
 import Sidebar from "@/components/Sidebar";
+import { CollectionProvider } from "@/contexts/ContentContext";
 import Script from "next/script";
 
 export default function RootLayout({
@@ -16,7 +17,7 @@ export default function RootLayout({
         onError={() => console.error("Failed to load VLibras script")}/>
         <Sidebar />
         <div className="bg-white w-full h-full rounded-3xl max-w-full" id="main-content">
-            {children}
+            <CollectionProvider>{children}</CollectionProvider>
         </div>
     </div>
   );
