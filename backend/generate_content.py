@@ -25,7 +25,6 @@ BASE_URL = "https://api.aimlapi.com/images/generations"
 
 # Configurações
 MAX_CONCURRENT_REQUESTS = 5
-BATCH_SIZE = 10
 REQUEST_TIMEOUT = 30
 
 # Inicialização do Firebase
@@ -44,14 +43,17 @@ llm = LLM(
 )
 
 # Inicialização do FastAPI
-app = FastAPI(title="Image Generator API")
+app = FastAPI(title="Content and Image Generator API")
 
-# Modelo Pydantic para a requisição
-class GenerationRequest(BaseModel):
+# Modelos Pydantic
+class ContentGenerationRequest(BaseModel):
     topic: str
     user_id: str
 
-# Classe para Gerar Imagens
+class ImageGenerationRequest(BaseModel):
+    collection_id: str
+    text_en: str
+
 class ImageGenerator:
     def __init__(self):
         self.headers = {
@@ -105,67 +107,6 @@ class ImageGenerator:
                 logger.error(f"Erro ao gerar imagem para '{prompt}': {e}")
                 return None
 
-    async def process_items(self, session: aiohttp.ClientSession, items: List[Tuple[str, str]], tipo: str) -> List[Dict[str, str]]:
-        """Processa uma lista de itens (palavras ou frases) para gerar imagens."""
-        tasks = [self.generate_single_image(session, item[1]) for item in items]
-        urls = await asyncio.gather(*tasks)
-        return [
-            {"tipo": tipo, "texto_pt": item[0], "texto_en": item[1], "url": url}
-            for item, url in zip(items, urls) if url
-        ]
-
-    async def save_images_to_collection(self, user_id: str, collection_id: str, images: List[Dict[str, str]]):
-        """Salva as imagens na coleção do usuário no Firestore."""
-        try:
-            collection_ref = db.collection('users').document(user_id).collection('collections').document(collection_id)
-            images_ref = collection_ref.collection('images')
-
-            batch_write = db.batch()
-            for image in images:
-                doc_ref = images_ref.document()
-                image['created_at'] = datetime.now()
-                batch_write.set(doc_ref, image)
-            
-            await asyncio.to_thread(batch_write.commit)
-            logger.info(f"{len(images)} imagens salvas na coleção '{collection_id}' do usuário '{user_id}'.")
-        except Exception as e:
-            logger.error(f"Erro ao salvar imagens na coleção: {e}")
-            raise
-
-    async def generate_images_for_collection(self, user_id: str, collection_id: str, data: Dict[str, List[Tuple[str, str]]]):
-        """Gera imagens para uma coleção específica e salva no Firestore."""
-        async with aiohttp.ClientSession() as session:
-            palavras_task = self.process_items(session, data["palavras"], "palavra")
-            frases_task = self.process_items(session, data["frases"], "frase")
-            
-            palavras_results, frases_results = await asyncio.gather(palavras_task, frases_task)
-
-            all_images = palavras_results + frases_results
-
-            # Salva no Firestore
-            await self.save_images_to_collection(user_id, collection_id, all_images)
-
-            logger.info(
-                f"Processamento concluído: {len(palavras_results)} palavras e {len(frases_results)} frases geradas."
-            )
-            
-            return all_images
-
-async def create_collection(user_id: str, collection_title: str) -> str:
-    """Cria uma nova coleção para um usuário no Firestore."""
-    try:
-        collection_ref = db.collection('users').document(user_id).collection('collections').document()
-        collection_data = {
-            "title": collection_title,
-            "created_at": datetime.now()
-        }
-        collection_ref.set(collection_data)
-        logger.info(f"Coleção '{collection_title}' criada com ID: {collection_ref.id}")
-        return collection_ref.id
-    except Exception as e:
-        logger.error(f"Erro ao criar coleção: {e}")
-        raise
-
 def create_agents():
     """Cria agentes para geração de palavras e frases."""
     word_list_agent = Agent(
@@ -197,31 +138,31 @@ def extract_json(text):
         logger.error(f"Erro ao decodificar JSON: {e}")
     return None
 
-def format_results(word_list_results, sentence_results):
-    """Formata os resultados em um formato padronizado."""
-    word_list_json = extract_json(str(word_list_results))
-    sentences_json = extract_json(str(sentence_results))
-    
-    result = {
-        "palavras": [(pt, en) for pt, en in zip(
-            word_list_json.get("palavras_pt", []),
-            word_list_json.get("palavras_en", [])
-        )] if word_list_json else [],
-        "frases": [(pt, en) for pt, en in zip(
-            sentences_json.get("frases_pt", []),
-            sentences_json.get("frases_en", [])
-        )][:5] if sentences_json else []
-    }
-    
-    return result
-
-async def generate_content_and_images(topic: str, user_id: str):
-    """Função principal que gera conteúdo e imagens de forma assíncrona."""
+async def generate_content(topic: str, user_id: str):
+    """Gera o conteúdo (palavras e frases) e salva no Firestore, retornando todo o conteúdo gerado."""
     logger.info(f"Iniciando geração de conteúdo para o tema: {topic}")
     
     try:
-        # Cria uma coleção para o usuário
-        collection_id = await create_collection(user_id, f"Coleção de {topic}")
+        # Verifica se o usuário existe
+        user_ref = db.collection('users').document(user_id)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Usuário não encontrado: {user_id}"
+            )
+            
+        # Cria nova coleção para o usuário
+        collections_ref = user_ref.collection('collections').document()
+        
+        collection_data = {
+            "title": f"Coleção de {topic}",
+            "created_at": datetime.now(),
+            "topic": topic
+        }
+        collections_ref.set(collection_data)
+        collection_id = collections_ref.id
         
         word_list_agent, sentence_agent = create_agents()
 
@@ -249,6 +190,7 @@ async def generate_content_and_images(topic: str, user_id: str):
         )
         word_list_result = crew_words.kickoff()
 
+        # Extrai e processa as palavras
         word_list_json = extract_json(str(word_list_result))
         words_pt = word_list_json.get("palavras_pt", [])[:5] if word_list_json else []
         words_en = word_list_json.get("palavras_en", [])[:5] if word_list_json else []
@@ -288,41 +230,158 @@ async def generate_content_and_images(topic: str, user_id: str):
             verbose=True
         )
         sentences_result = crew_sentences.kickoff()
+        sentences_json = extract_json(str(sentences_result))
 
-        # Formata os resultados
-        generated_data = format_results(word_list_result, sentences_result)
-
-        # Gera as imagens e salva na coleção
-        logger.info("Iniciando geração de imagens...")
-        generator = ImageGenerator()
-        images = await generator.generate_images_for_collection(user_id, collection_id, generated_data)
+        # Prepara as listas para armazenar todo o conteúdo
+        words_content = []
+        sentences_content = []
         
-        return {
+        # Salva palavras no Firestore e adiciona à lista de conteúdo
+        images_ref = collections_ref.collection('images')
+        
+        for pt, en in zip(words_pt, words_en):
+            doc_ref = images_ref.document()
+            word_data = {
+                "tipo": "palavra",
+                "texto_pt": pt,
+                "texto_en": en,
+                "created_at": datetime.now()
+            }
+            doc_ref.set(word_data)
+            words_content.append({
+                "id": doc_ref.id,
+                **word_data
+            })
+
+        # Salva frases no Firestore e adiciona à lista de conteúdo
+        frases_pt = sentences_json.get("frases_pt", [])[:5] if sentences_json else []
+        frases_en = sentences_json.get("frases_en", [])[:5] if sentences_json else []
+        
+        for pt, en in zip(frases_pt, frases_en):
+            doc_ref = images_ref.document()
+            sentence_data = {
+                "tipo": "frase",
+                "texto_pt": pt,
+                "texto_en": en,
+                "created_at": datetime.now()
+            }
+            doc_ref.set(sentence_data)
+            sentences_content.append({
+                "id": doc_ref.id,
+                **sentence_data
+            })
+
+        # Prepara a resposta completa
+        response_data = {
             "collection_id": collection_id,
-            "images": images,
-            "words": generated_data["palavras"],
-            "sentences": generated_data["frases"]
+            "title": collection_data["title"],
+            "topic": topic,
+            "created_at": collection_data["created_at"],
+            "words": words_content,
+            "sentences": sentences_content
         }
+
+        return response_data
         
+    except HTTPException as he:
+        raise he
     except Exception as e:
         logger.error(f"Erro durante o processo: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/generate")
-async def generate_images(request: GenerationRequest):
+@app.post("/generate/content")
+async def generate_content_endpoint(request: ContentGenerationRequest):
     """
-    Endpoint para gerar imagens baseadas em um tópico para um usuário específico.
-    
-    Args:
-        request: GenerationRequest contendo topic e user_id
-        
-    Returns:
-        Dict contendo collection_id, imagens geradas, palavras e frases
+    Endpoint para gerar conteúdo (palavras e frases) e retornar todo o conteúdo gerado.
     """
     try:
-        result = await generate_content_and_images(request.topic, request.user_id)
+        result = await generate_content(request.topic, request.user_id)
         return result
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/generate/image")
+async def generate_image_endpoint(request: ImageGenerationRequest):
+    """
+    Endpoint para gerar uma única imagem usando collection_id e texto em inglês.
+    """
+    try:
+        # Busca todas as coleções de todos os usuários
+        users_ref = db.collection('users')
+        all_users = users_ref.stream()
+        
+        collection_ref = None
+        # Procura a coleção específica em todos os usuários
+        for user in all_users:
+            possible_collection = users_ref.document(user.id).collection('collections').document(request.collection_id)
+            if possible_collection.get().exists:
+                collection_ref = possible_collection
+                break
+                
+        if not collection_ref:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Coleção não encontrada: {request.collection_id}"
+            )
+            
+        images_ref = collection_ref.collection('images')
+        query = images_ref.where('texto_en', '==', request.text_en).limit(1)
+        docs = query.get()
+        
+        doc_ref = None
+        doc_data = None
+        
+        for doc in docs:
+            doc_ref = doc.reference
+            doc_data = doc.to_dict()
+            break
+            
+        if not doc_ref:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Texto não encontrado na coleção: {request.text_en}"
+            )
+            
+        # Verifica se já tem URL
+        if doc_data.get('url'):
+            return {
+                "success": True,
+                "url": doc_data['url'],
+                "message": "Imagem já existe para este texto",
+                "data": doc_data
+            }
+        
+        # Gera a nova imagem
+        generator = ImageGenerator()
+        async with aiohttp.ClientSession() as session:
+            url = await generator.generate_single_image(session, request.text_en)
+            
+            if url:
+                # Atualiza o documento com a URL
+                doc_ref.update({
+                    "url": url,
+                    "updated_at": datetime.now()
+                })
+                
+                doc_data['url'] = url
+                doc_data['updated_at'] = datetime.now()
+                
+                return {
+                    "success": True,
+                    "url": url,
+                    "message": "Imagem gerada e documento atualizado com sucesso",
+                    "data": doc_data
+                }
+            else:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Não foi possível gerar a imagem"
+                )
+                
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Erro ao gerar imagem: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
