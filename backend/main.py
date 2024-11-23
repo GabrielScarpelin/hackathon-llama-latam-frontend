@@ -8,6 +8,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 from firebase_admin import credentials, initialize_app, firestore
 from crewai import Agent, Task, Crew, LLM
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
 # Configuração de logging
 logging.basicConfig(
@@ -27,7 +29,7 @@ BATCH_SIZE = 10
 REQUEST_TIMEOUT = 30
 
 # Inicialização do Firebase
-cred = credentials.Certificate('credentials.json')
+cred = credentials.Certificate('fluxo/credentials.json')
 firebase_app = initialize_app(cred)
 db = firestore.client()
 
@@ -41,6 +43,13 @@ llm = LLM(
     top_p=0.9
 )
 
+# Inicialização do FastAPI
+app = FastAPI(title="Image Generator API")
+
+# Modelo Pydantic para a requisição
+class GenerationRequest(BaseModel):
+    topic: str
+    user_id: str
 
 # Classe para Gerar Imagens
 class ImageGenerator:
@@ -139,9 +148,9 @@ class ImageGenerator:
             logger.info(
                 f"Processamento concluído: {len(palavras_results)} palavras e {len(frases_results)} frases geradas."
             )
+            
+            return all_images
 
-
-# Função para Criar Coleção no Firestore
 async def create_collection(user_id: str, collection_title: str) -> str:
     """Cria uma nova coleção para um usuário no Firestore."""
     try:
@@ -157,8 +166,6 @@ async def create_collection(user_id: str, collection_title: str) -> str:
         logger.error(f"Erro ao criar coleção: {e}")
         raise
 
-
-# Funções Auxiliares Mantidas
 def create_agents():
     """Cria agentes para geração de palavras e frases."""
     word_list_agent = Agent(
@@ -179,7 +186,6 @@ def create_agents():
 
     return word_list_agent, sentence_agent
 
-
 def extract_json(text):
     """Extrai JSON de uma string."""
     try:
@@ -190,7 +196,6 @@ def extract_json(text):
     except json.JSONDecodeError as e:
         logger.error(f"Erro ao decodificar JSON: {e}")
     return None
-
 
 def format_results(word_list_results, sentence_results):
     """Formata os resultados em um formato padronizado."""
@@ -210,104 +215,116 @@ def format_results(word_list_results, sentence_results):
     
     return result
 
-
-async def generate_content_and_images(topic: str, user_id: str, collection_id: str):
+async def generate_content_and_images(topic: str, user_id: str):
     """Função principal que gera conteúdo e imagens de forma assíncrona."""
     logger.info(f"Iniciando geração de conteúdo para o tema: {topic}")
-    word_list_agent, sentence_agent = create_agents()
-
-    # Task para lista de palavras
-    word_list_task = Task(
-        description=f"""
-        Gere EXATAMENTE um JSON com uma lista de até 5 palavras relacionadas ao tema: {topic}, em português e inglês.
-        Use este formato:
-
-        {{
-            "palavras_pt": ["palavra1_pt", "palavra2_pt", "palavra3_pt"],
-            "palavras_en": ["word1_en", "word2_en", "word3_en"]
-        }}
-
-        IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.
-        """,
-        expected_output="JSON com lista de palavras em português e inglês",
-        agent=word_list_agent
-    )
-
-    crew_words = Crew(
-        agents=[word_list_agent],
-        tasks=[word_list_task],
-        verbose=True
-    )
-    word_list_result = crew_words.kickoff()
-
-    word_list_json = extract_json(str(word_list_result))
-    words_pt = word_list_json.get("palavras_pt", [])[:5] if word_list_json else []
-    words_en = word_list_json.get("palavras_en", [])[:5] if word_list_json else []
-
-    if not words_pt or not words_en:
-        raise ValueError("Nenhuma lista de palavras foi gerada.")
-
-    # Task para frases
-    sentence_task = Task(
-        description=f"""
-        Gere EXATAMENTE um JSON com até 5 frases expositivas e visuais usando estas palavras em português e inglês.
-        Palavras PT: {', '.join(words_pt)}
-        Palavras EN: {', '.join(words_en)}
-        As frases devem ser simples e ajudar as crianças a imaginar o que está sendo descrito. AS FRASES DEVEM TER NO MAXIMO 3 PALAVRAS.
-        Use este formato: 
-
-        {{
-            "frases_pt": [
-                "Frase exemplo em português",
-                "Outra frase em português"
-            ],
-            "frases_en": [
-                "Example phrase in English",
-                "Another phrase in English"
-            ]
-        }}
-
-        IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.
-        """,
-        expected_output="JSON com frases descritivas em português e inglês",
-        agent=sentence_agent
-    )
-
-    crew_sentences = Crew(
-        agents=[sentence_agent],
-        tasks=[sentence_task],
-        verbose=True
-    )
-    sentences_result = crew_sentences.kickoff()
-
-    # Formata os resultados
-    generated_data = format_results(word_list_result, sentences_result)
-
-    # Gera as imagens e salva na coleção
-    logger.info("Iniciando geração de imagens...")
-    generator = ImageGenerator()
-    await generator.generate_images_for_collection(user_id, collection_id, generated_data)
     
-    return generated_data
-
-
-async def main():
-    """Função principal."""
-    user_id = "user123"  # ID do usuário
-    collection_title = "Coleção de Animais"  # Título da coleção
-    topic = "Animais"
-
     try:
         # Cria uma coleção para o usuário
-        collection_id = await create_collection(user_id, collection_title)
+        collection_id = await create_collection(user_id, f"Coleção de {topic}")
+        
+        word_list_agent, sentence_agent = create_agents()
 
-        # Gera conteúdo e imagens
-        await generate_content_and_images(topic, user_id, collection_id)
+        # Task para lista de palavras
+        word_list_task = Task(
+            description=f"""
+            Gere EXATAMENTE um JSON com uma lista de até 5 palavras relacionadas ao tema: {topic}, em português e inglês.
+            Use este formato:
 
-        logger.info("Processo completo!")
+            {{
+                "palavras_pt": ["palavra1_pt", "palavra2_pt", "palavra3_pt"],
+                "palavras_en": ["word1_en", "word2_en", "word3_en"]
+            }}
+
+            IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.
+            """,
+            expected_output="JSON com lista de palavras em português e inglês",
+            agent=word_list_agent
+        )
+
+        crew_words = Crew(
+            agents=[word_list_agent],
+            tasks=[word_list_task],
+            verbose=True
+        )
+        word_list_result = crew_words.kickoff()
+
+        word_list_json = extract_json(str(word_list_result))
+        words_pt = word_list_json.get("palavras_pt", [])[:5] if word_list_json else []
+        words_en = word_list_json.get("palavras_en", [])[:5] if word_list_json else []
+
+        if not words_pt or not words_en:
+            raise ValueError("Nenhuma lista de palavras foi gerada.")
+
+        # Task para frases
+        sentence_task = Task(
+            description=f"""
+            Gere EXATAMENTE um JSON com até 5 frases expositivas e visuais usando estas palavras em português e inglês.
+            Palavras PT: {', '.join(words_pt)}
+            Palavras EN: {', '.join(words_en)}
+            As frases devem ser simples e ajudar as crianças a imaginar o que está sendo descrito. AS FRASES DEVEM TER NO MAXIMO 3 PALAVRAS.
+            Use este formato: 
+
+            {{
+                "frases_pt": [
+                    "Frase exemplo em português",
+                    "Outra frase em português"
+                ],
+                "frases_en": [
+                    "Example phrase in English",
+                    "Another phrase in English"
+                ]
+            }}
+
+            IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.
+            """,
+            expected_output="JSON com frases descritivas em português e inglês",
+            agent=sentence_agent
+        )
+
+        crew_sentences = Crew(
+            agents=[sentence_agent],
+            tasks=[sentence_task],
+            verbose=True
+        )
+        sentences_result = crew_sentences.kickoff()
+
+        # Formata os resultados
+        generated_data = format_results(word_list_result, sentences_result)
+
+        # Gera as imagens e salva na coleção
+        logger.info("Iniciando geração de imagens...")
+        generator = ImageGenerator()
+        images = await generator.generate_images_for_collection(user_id, collection_id, generated_data)
+        
+        return {
+            "collection_id": collection_id,
+            "images": images,
+            "words": generated_data["palavras"],
+            "sentences": generated_data["frases"]
+        }
+        
     except Exception as e:
         logger.error(f"Erro durante o processo: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/generate")
+async def generate_images(request: GenerationRequest):
+    """
+    Endpoint para gerar imagens baseadas em um tópico para um usuário específico.
+    
+    Args:
+        request: GenerationRequest contendo topic e user_id
+        
+    Returns:
+        Dict contendo collection_id, imagens geradas, palavras e frases
+    """
+    try:
+        result = await generate_content_and_images(request.topic, request.user_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
