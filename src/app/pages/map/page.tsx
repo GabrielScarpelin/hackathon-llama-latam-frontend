@@ -1,10 +1,13 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Flag } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 const LearningRoadmap = () => {
   const [currentStep, setCurrentStep] = useState(0);
+  const queryParams = useSearchParams();
 
   const points = [
     { color: '#FF6B6B', label: 'Início', number: '1' },
@@ -13,6 +16,10 @@ const LearningRoadmap = () => {
     { color: '#95D44A', label: '', number: '4' },
     { color: '#6C63FF', label: 'Fim', number: '5' }
   ];
+
+  useEffect(() => {
+    console.log('queryParams:', queryParams);
+  }, []);
 
   return (
     <div className="w-full max-w-5xl mx-auto p-8 bg-white rounded-xl">
@@ -55,6 +62,14 @@ const LearningRoadmap = () => {
             </div>
           ))}
         </div>
+      </div>
+      <div>
+        <button>
+          Ver progresso
+        </button>
+        <Link href={`talking?${queryParams.toString()}`}>
+          Continuar
+        </Link>
       </div>
     </div>
   );
