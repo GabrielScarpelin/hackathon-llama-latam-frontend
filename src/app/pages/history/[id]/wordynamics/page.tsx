@@ -50,56 +50,56 @@ export default function Sentencedynamic() {
   };
 
   return (
-    <div className="bg-white rounded-3xl p-6 w-full max-w-lg mx-auto flex flex-col h-[500px]">
-      <h1 className="text-2xl font-bold text-center mb-6">
-        Dinâmica de palavras
-      </h1>
+  <div className="rounded-3xl p-2 w-full max-w-lg mx-auto flex flex-col h-[500px]">
+    <h1 className="text-2xl font-bold text-center mb-1">Dinâmica de palavras</h1>
 
-      {/* Texto atual em negrito */}
-      <div className="mb-3" onClick={() => {
-        if (player) {
-          // @ts-expect-error - the object is never because it's not defined in the global scope
-          player.translate(currentWord);
-        }
-      }}>
-        <span className="inline-block bg-[#E454A4] text-white px-6 py-2 rounded-full text-lg font-bold">
-          {isLoading ? 'Carregando...' : currentWord}
-        </span>
-      </div>
-      
-      {/* Container de imagens com menor distância */}
-      <div className="flex flex-col gap-4 mb-4">
-        {/* Primeira imagem - menor e alinhada à esquerda */}
-        <div className="flex justify-start">
-          {isLoading ? (
-            <div className="w-40 h-28 bg-gray-200 rounded-2xl animate-pulse" />
-          ) : currentImage ? (
-            <Image
-              src={currentImage}
-              alt={currentWord}
-              className="w-40 h-28 object-cover rounded-2xl"
-            />
-          ) : (
-            <div className="w-40 h-28 bg-gray-200 rounded-2xl" />
-          )}
-        </div>
-
-        {/* Segunda imagem - maior e alinhada à direita */}
-        <div className="flex justify-end" id='wrapper'>
-        </div>
-      </div>
-
-      {/* Botão alinhado ao final com a mesma altura que a imagem e menor margem */}
-      <div className="w-96 flex justify-end ml-auto mb-2">
-        <button
-          onClick={handleNext}
-          disabled={isLoading}
-          className="bg-[#E454A4] h-12 text-white text-lg px-8 py-2 rounded-full flex items-center font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#d13d93] transition-all duration-300"
-        >
-          {isLoading ? 'Gerando...' : 'Próximo'}
-          <span className="ml-2">→</span>
-        </button>
-      </div>
+    {/* Texto atual em negrito */}
+    <div className="mb-3" onClick={() => {
+      if (player) {
+        // @ts-expect-error - the object is never because it's not defined in the global scope
+        player.translate(currentWord);
+      }
+    }}>
+      <span className="inline-block bg-[#E454A4] text-white px-20 py-2 rounded-full text-lg font-bold">
+        {isLoading ? 'Carregando...' : currentWord}
+      </span>
     </div>
+
+    {/* Contêiner das imagens */}
+    <div className="flex gap-8 items-center mb-0">
+      {/* Primeira imagem maior */}
+      <div className="w-60 h-60 bg-gray-200 rounded-2xl flex-shrink-0">
+        {isLoading ? (
+          <div className=" bg-gray-200 rounded-2xl animate-pulse" />
+        ) : currentImage ? (
+          <Image
+            src={currentImage}
+            alt={currentWord}
+            className="object-cover rounded-2xl"
+            width={240}
+            height={240}
+          />
+        ) : (
+          <div className=" bg-gray-200 rounded-2xl" />
+        )}
+      </div>
+
+      {/* Segunda imagem maior */}
+      <div className="w-100 h-80 bg-gray-200 rounded-2xl flex justify-end" id="wrapper"></div>
+    </div>
+
+    {/* Botão alinhado abaixo das imagens e à direita */}
+    <div className="flex justify-end mt-6">
+      <button
+        onClick={handleNext}
+        disabled={isLoading}
+        className="bg-[#E454A4] h-12 text-white text-lg px-8 py-2 rounded-full flex items-center font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#d13d93] transition-all duration-300"
+      >
+        {isLoading ? 'Gerando...' : 'Próximo'}
+        <span className="ml-2">→</span>
+      </button>
+    </div>
+  </div>
+
   );
 }
