@@ -226,7 +226,7 @@ class ImageGenerator:
         - Soft edges and rounded shapes
         - Clean and clear composition
         - Safe and appropriate for young children
-        - Simple background with minimal details
+        - Purple and simple background with minimal details
         - 2D style with minimal shading
         
         The illustration should show: """
@@ -356,10 +356,10 @@ async def generate_content(topic: str, user_id: str):
         # Task para frases
         sentence_task = Task(
             description=f"""
-            Gere EXATAMENTE um JSON com até 5 frases expositivas e visuais usando estas palavras em português e inglês.
+            Gere EXATAMENTE um JSON com até 5 frases expositivas e visuais usando estas palavras em português e inglês. Essa frase deve ser obrigatóriamente composta por uma palavra e um verbo
             Palavras PT: {', '.join(words_pt)}
             Palavras EN: {', '.join(words_en)}
-            As frases devem ser simples e ajudar as crianças a imaginar o que está sendo descrito. AS FRASES DEVEM TER NO MAXIMO 3 PALAVRAS.
+            As frases devem ser simples, evite abstrações e descrição de cenários não visuais, e ajudar as crianças a imaginar o que está sendo descrito. AS FRASES DEVEM TER NO MAXIMO 3 PALAVRAS.
             Use este formato: 
 
             {{
