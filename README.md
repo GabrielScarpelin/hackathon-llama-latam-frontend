@@ -43,22 +43,30 @@ The platform uses **LLama 2**, a state-of-the-art AI model, to generate personal
 
 ---
 
-## Impact on Families and Schools
+### Impact on Families and Schools
 
-### Families
+#### Families
 Empowers parents to actively participate in their child's learning journey. Cris.ai enables families to overcome communication barriers and build stronger emotional bonds.
 
-### Schools
+#### Schools
 Acts as a supplementary resource for public schools that lack qualified Libras educators. Teachers can use Cris.ai to enhance classroom inclusivity and provide personalized support for deaf students.
 
-### Children
+#### Children
 Offers an engaging, gamified learning experience that motivates young learners and ensures consistent exposure to Libras.
 
 ---
 
-## Persona: Cris
+## Personas
+
+&emsp; Personas are semi-fictional profiles of ideal users, crafted from real data on their habits, behaviors, needs, and challenges. Developed through our insights about this topic, personas capture the key characteristics of different user groups. In product development, personas play an important role helping the developers understand users, their goals, and how they interact with the product, in order to develop a user-focused aplication.
+
+### Persona: Cris
 
 **Cris da Silva** is a 35-year-old construction worker in São Paulo, Brazil. He is the father of Pedro, a 6-year-old deaf child. Cris dreams of providing Pedro with a quality education but cannot afford private tutors or specialized resources. Despite his long work hours, Cris is determined to support his son and seeks an affordable, flexible, and easy-to-use solution.
+
+&emsp;Cris faces significant challenges as a father trying to support his 6-year-old deaf son, Pedro. Without access to affordable resources, learning Libras — an important step for communication — feels out of reach. Public schools lack trained educators, leaving Pedro without adequate support in his education. The few existing materials available are often too expensive or not engaging enough for a young child like Pedro. Moreover, the additional expenses associated with inclusive education put a strain on Cris’s finances, especially as a construction worker with long hours and limited income.
+
+&emsp;Cris envisions using the solution as a vital tool to support Pedro's education and development. With AI-generated personalized lessons tailored for Pedro’s age, Cris can ensure his son receives engaging and accessible content, even without prior experience with Libras. The platform allows him to learn alongside Pedro, building their communication skills together. Cris plans to incorporate the gamified learning features into their daily routine, making education an enjoyable activity despite his busy schedule. This solution not only provides an affordable way for Cris to support Pedro’s learning but also makes him part of his son’s learning journey.
 
 ---
 
