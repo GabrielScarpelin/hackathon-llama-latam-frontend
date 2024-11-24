@@ -1,22 +1,45 @@
-import { signOut } from "@/auth";
+import { auth } from "@/auth";
 
-export default function Page() {
+const user = {
+    name: "Yanomã",
+    email: "joao.silva@example.com",
+    age: 28,
+    
+}
+
+export default async function Page() {
+    const session = await auth()
     return (
-        <div className="w-full h-full justify-center items-center">
-            { /* Signout */ }
-            <div className="w-full h-full flex items-center justify-center">
-                <div>
-                    <h1 className="text-4xl text-white font-bold text-center">Sign out</h1>
-                    <form className="flex flex-col gap-4 mt-4" action={async () => {
-                        "use server";
-                        await signOut({
-                            redirectTo: "/signin",
-                        });
-                    }}>
-                        <button className="bg-red-600 drop-shadow-lg text-white py-2 px-4 rounded-xl flex gap-4 items-center font-semibold text-lg" type="submit">Sair da plataforma</button>
-                    </form>
+        <div className="flex flex-col items-center justify-center pt-8 space-y-4">
+            <div className="w-1/2 h-auto p-4 rounded-lg shadow-md bg-p">
+            <div className="flex items-center space-x-4 mb-6">
+                {/* Ícone ou Avatar */}
+                <img src={session?.user?.image} className="w-12 h-12 rounded-full bg-pink-500"/>
+                <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                    Nome:
+                </label>
+                <div className="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-md">
+                    {session?.user?.name || "Nome não disponível"}
+                </div>
                 </div>
             </div>
+
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                Email:
+                </label>
+                <div className="text-lg font-semibold text-gray-800 bg-gray-100 p-2 rounded-md">
+                {session?.user?.email || "Email não disponível"}
+                </div>
+            </div>
+
+            <div className="mb-4">
+
+            </div>
+            </div>
+
+
         </div>
-    )
+    );
 }

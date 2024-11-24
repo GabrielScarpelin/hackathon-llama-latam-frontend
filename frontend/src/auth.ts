@@ -32,6 +32,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             email: profile?.email || user.email,
           })
         })
+        console.log(response)
         if (!response.ok) {
           throw new Error("Failed to sign in")
         }
