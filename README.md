@@ -64,22 +64,30 @@ Offers an engaging, gamified learning experience that motivates young learners a
 
 ## Value Proposition Canvas
 
+<div align="center">
+<sub>Figure 1 - Value Proposition Canvas </sub>
+<img
+src="assets\ValueProposition.png"
+alt="Value Proposition Canvas">
+<sup>Source: Material produced by the authors (2024).</sup>
+</div>  
+
 ### Customer Profile
 
 1. **Jobs**:
    - Learn Libras to communicate with their child.
    - Provide age-appropriate, quality education to their child.
-   - Support inclusive education in schools lacking resources.
 
 2. **Pains**:
    - Lack of affordable resources for learning Libras.
    - Limited availability of engaging, child-friendly materials.
    - Public schools without trained Libras educators.
+   - Inclusive education means additional expenses for families
 
 3. **Gains**:
-   - Affordable, easy-to-use tools for learning Libras at home.
-   - Interactive, gamified content that keeps children engaged.
-   - Confidence in supporting their child’s development and education.
+   - Affordable ways to teach they children
+   - Interactive study, to keep their kids engaged
+   - Be a part of their learning journey
 
 ### Value Map
 
@@ -95,8 +103,8 @@ Offers an engaging, gamified learning experience that motivates young learners a
 
 3. **Gain Creators**:
    - Fosters better communication and bonds between parents and children.
-   - Enhances public school inclusivity and effectiveness in teaching deaf students.
-   - Provides a motivating environment for young learners to thrive.
+   - Enhances public school students inclusivity and effectiveness in learning Libras.
+   - Provides better enviroment to these kids communicate e learn.
 
 ---
 
