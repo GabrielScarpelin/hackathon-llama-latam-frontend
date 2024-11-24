@@ -25,17 +25,29 @@ llm = LLM(
 )
 
 # Modelo de entrada para validação com Pydantic
-class UserInfo(BaseModel):
-    name: str
-    experience_level: str
-    available_time: str
+class Interest(BaseModel):
+    interest: str
 
 # Definir o agente
 def roadmap_agent():
     return Agent(
-        role="Analista de estratégia de estudos",
-        goal="Desenvolver um plano/guia de estudos para o aprendizado de Libras, ele deve ser otimizado e personalizado de acordo com o perfil do usuário.",
-        backstory="Especialista em planejamento educacional com vasta experiência em personalização de currículos.",
+        role="Criador de Tópicos de Estudos Infantis", 
+        goal="""
+        Criar tópicos de estudos personalizados para crianças baseado em áreas de interesse do usuário. No padrão:
+
+        {
+            "topics": [
+                "Tópico 1",
+                "Tópico 2",
+                "Tópico 3",
+                "Tópico 4",
+                "Tópico 5",
+                "Tópico 6"
+            ]
+        }
+        
+        """,
+        backstory="Especialista em planejamento educacional infantil com vasta experiência em personalização de currículos.",
         llm=llm,
         verbose=True,
     )
@@ -44,8 +56,25 @@ def roadmap_agent():
 def generate_student_roadmap(user_info: Dict[str, Any]):
     agent = roadmap_agent()
     task = Task(
-        description=f"Desenvolver um plano de estudos alinhado com o perfil do usuário, bem dividido entre fases e etapas de marcado por tempo. Informações sobre o usuário: {user_info}",
-        expected_output="Um cronograma segmentado em marcos e etapas a serem concluídas pelo usuário, mantendo seu aprendizado dinâmico e otimizado.",
+        description=f"Desenvolver uma sequencia de tópicos de estudo infantis baseado nas áreas de interesse: {user_info}",
+        expected_output=
+        """
+        Uma lista de tópicos de estudo personalizados, alinhados com as áreas de interesse do usuário.
+        Os tópicos devem ser baseados nos interesses do usuário e devem ser organizados de forma lógica e progressiva.
+        Os tópicos devem ser formados duas palavras.
+        Seguir o formato:
+
+        {
+            "topics": [
+                "Tópico 1",
+                "Tópico 2",
+                "Tópico 3",
+                "Tópico 4",
+                "Tópico 5",
+                "Tópico 6"
+            ]
+        }
+        """,
         agent=agent,
     )
     crew = Crew(agents=[agent], tasks=[task], verbose=True)
@@ -55,8 +84,25 @@ def generate_student_roadmap(user_info: Dict[str, Any]):
 def generate_parent_roadmap(user_info: Dict[str, Any]):
     agent = roadmap_agent()
     task = Task(
-        description=f"Desenvolver um plano de estudos alinhado com o perfil de algum relativo próximo do usuário, uma vez que ele está acessando a plataforma para mediar o aprendizado do filho. Informações sobre o relativo do usuário: {user_info}",
-        expected_output="Um cronograma de estudos personalizado, alinhado com o perfil do usuário. Deve se iniciar por conteúdos de mais facíl aprendizado, respeitando o tempo disponível do usuário, e sua curva natural de aprendizado.",
+        description=f"Desenvolver uma sequencia de tópicos de estudo baseado nas áreas de interesse: {user_info}",
+        expected_output=
+        """
+        Uma lista de tópicos de estudo personalizados, alinhados com as áreas de interesse do relativo do usuário.
+        Os tópicos devem ser baseados nos interesses do relativo e devem ser organizados de forma lógica e progressiva.
+        Os tópicos devem ser formados por no máximo 2 palavras.
+        Seguir o formato:
+
+        {
+            "topics": [
+                "Tópico 1",
+                "Tópico 2",
+                "Tópico 3",
+                "Tópico 4",
+                "Tópico 5",
+                "Tópico 6"
+            ]
+        }
+        """,
         agent=agent,
     )
     crew = Crew(agents=[agent], tasks=[task], verbose=True)
@@ -65,7 +111,7 @@ def generate_parent_roadmap(user_info: Dict[str, Any]):
 
 # Endpoints da API
 @app.post("/api/student-roadmap")
-async def api_student_roadmap(user_info: UserInfo):
+async def api_student_roadmap(user_info: Interest):
     try:
         result = generate_student_roadmap(user_info.dict())
         return {"success": True, "roadmap": result}
@@ -73,7 +119,7 @@ async def api_student_roadmap(user_info: UserInfo):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/parent-roadmap")
-async def api_parent_roadmap(user_info: UserInfo):
+async def api_parent_roadmap(user_info: Interest):
     try:
         result = generate_parent_roadmap(user_info.dict())
         return {"success": True, "roadmap": result}
