@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
-export default function Sentencedynamic() {
+export default function SentenceDynamicsPage() {
   const [currentWord, setCurrentWord] = useState('Cachorro correndo na rua ');
   const [currentImage, setCurrentImage] = useState('');
   const [isLoading, setIsLoading] = useState(false);

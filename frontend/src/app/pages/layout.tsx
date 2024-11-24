@@ -17,7 +17,9 @@ export default function RootLayout({
         onError={() => console.error("Failed to load VLibras script")}/>
         <Sidebar />
         <div className="bg-white w-full h-full rounded-3xl max-w-full" id="main-content">
-            <CollectionProvider>{children}</CollectionProvider>
+            <CollectionProvider>
+                {children}
+            </CollectionProvider>
         </div>
     </div>
   );

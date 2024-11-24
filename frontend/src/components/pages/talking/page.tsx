@@ -5,7 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-const IntroScreen = () => {
+const TalkingPage = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [message, setMessage] = useState(null);
   const queryParams = useSearchParams();
@@ -150,4 +150,4 @@ const IntroScreen = () => {
   );
 };
 
-export default IntroScreen;
+export default TalkingPage;

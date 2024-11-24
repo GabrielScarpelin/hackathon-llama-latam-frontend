@@ -6,6 +6,7 @@ export interface Palavra {
     texto_pt: string;
     texto_en: string;
     created_at: string;
+    url?: string;
   }
   
   export interface Frase {
@@ -14,6 +15,7 @@ export interface Palavra {
     texto_pt: string;
     texto_en: string;
     created_at: string;
+    url?: string;
   }
   
   export interface Collection {
