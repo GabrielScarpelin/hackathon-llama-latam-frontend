@@ -425,7 +425,8 @@ async def check_user_exists(request: UserCheckRequest):
         
         return {
             "exists": exists,
-            "email": request.email
+            "email": request.email,
+            "id": docs[0].id if exists else None
         }
         
     except Exception as e:
