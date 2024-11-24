@@ -68,6 +68,14 @@ Offers an engaging, gamified learning experience that motivates young learners a
 
 &emsp;Cris envisions using the solution as a vital tool to support Pedro's education and development. With AI-generated personalized lessons tailored for Pedro’s age, Cris can ensure his son receives engaging and accessible content, even without prior experience with Libras. The platform allows him to learn alongside Pedro, building their communication skills together. Cris plans to incorporate the gamified learning features into their daily routine, making education an enjoyable activity despite his busy schedule. This solution not only provides an affordable way for Cris to support Pedro’s learning but also makes him part of his son’s learning journey.
 
+### Persona: Pedro
+
+**Pedro da Silva** is a 6-year-old deaf child living in São Paulo, Brazil. Despite the challenges he faces in communication and education, Pedro is curious, energetic, and eager to learn. He currently attends a public school that lacks trained Libras educators, leaving him unable to fully participate in class activities. At home, his father, Cris, strives to support his learning but struggles with limited resources and time.
+
+&emsp;Pedro faces a lack of inclusive educational resources both at school and at home. The absence of Libras-trained teachers at his school prevents him from engaging fully with his peers and lessons. Traditional educational materials are not designed for children like Pedro, making it hard for him to stay motivated or progress at the same rate as other children his age. Furthermore, his father’s limited knowledge of Libras and long work hours restrict their ability to communicate and learn together.
+
+&emsp; Pedro will use the solution to explore interactive, gamified lessons that make learning Libras both fun and accessible. Through personalized lessons tailored to his age and interests, Pedro can progress at his own pace, building confidence as he learns new skills. The platform’s engaging features, such as animations and games, will keep him motivated and focused, transforming his learning experience into an exciting daily routine. Additionally, with VLibras integration, Pedro will have access to accurate translations that enhance his understanding of the content and his ability to communicate effectively. By using the solution, Pedro will improve his language skills while enjoying the learning process.
+
 ---
 
 ## Value Proposition Canvas
