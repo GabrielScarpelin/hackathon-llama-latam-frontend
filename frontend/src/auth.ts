@@ -1,8 +1,25 @@
-import NextAuth from "next-auth"
+import NextAuth, { DefaultSession } from "next-auth"
 import Google from "next-auth/providers/google"
+import jwt from "jsonwebtoken"
+declare module "next-auth" {
+  interface Session extends DefaultSession {
+    jwt?: string; // Adiciona o campo `jwt` ao objeto `Session`
+    user: {
+      id: string; // Certifique-se de incluir outros campos personalizados
+    } & DefaultSession["user"];
+  }
+
+  interface JWT {
+    id?: string; // Adiciona o ID do usuário ao token JWT
+  }
+}
  
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [Google],
+  session: {
+    strategy: "jwt", // 1 DIA DE DURAÇÃO
+    maxAge: 24 * 60 * 60, // 24 hours
+  },
   callbacks: {
     async signIn({ user, account, profile }) {
       try {
@@ -46,7 +63,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       // Inclui o ID e outras informações na sessão
       if (token) {
+        console.log(token)
         session.user.id = token.id as string;
+        session.jwt = jwt.sign({
+          id: session.user.id,
+          name: session.user.name,
+
+        }, process.env.SECRET_KEY as string, {
+          algorithm: "HS256",
+          expiresIn: "1d"
+        }); // Adiciona o token completo na sessão
       }
       return session;
     },

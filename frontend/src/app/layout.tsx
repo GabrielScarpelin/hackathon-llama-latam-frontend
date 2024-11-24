@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { SessionProvider } from "next-auth/react";
 
 const baloo2 = localFont({
   src: "./fonts/Baloo2-VariableFont_wght.ttf",
@@ -24,7 +25,9 @@ export default function RootLayout({
       <body
         className={`${baloo2.className} antialiased`}
       >
-        {children}
+        <SessionProvider>
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );
