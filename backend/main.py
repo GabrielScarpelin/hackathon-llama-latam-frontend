@@ -9,8 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 # Configure CORS
-
-
 # Inclui os roteadores de todos os módulos
 app.include_router(introductions_app.router, prefix="/introductions")
 app.include_router(roadmap_app.router, prefix="/roadmaps")
