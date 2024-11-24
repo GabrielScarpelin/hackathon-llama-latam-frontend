@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
     remotePatterns: [{
       protocol: "https",
       hostname: "cdn.aimlapi.com",
+    }, {
+      protocol: "https",
+      hostname: "preview.redd.it",
     }]
   }
 };
