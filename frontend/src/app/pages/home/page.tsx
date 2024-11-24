@@ -6,6 +6,16 @@ import { useRouter } from "next/navigation";
 import FastButton from "@/components/FastButtonAi";
 
 export default function Home() {
+    const topics = [
+        "Móveis da casa",
+        "Animais de estimação",
+        "Cores e formas",
+        "Objetos de cozinha",
+        "Brinquedos",
+        "Instrumentos musicais",
+        "Roupas",
+        "Meios de transporte",
+    ];
     const router = useRouter();
     const [topic, setTopic] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -120,14 +130,16 @@ export default function Home() {
                     </div>
                 </div>
                 <div className="flex flex-wrap justify-center gap-2 mt-4">
-                    <FastButton text="Móveis da casa" onClick={() => {}} />
-                    <FastButton text="Móveis da casa" onClick={() => {}} />
-                    <FastButton text="Móveis da casa" onClick={() => {}} />
-                    <FastButton text="Móveis da casa" onClick={() => {}} />
-                    <FastButton text="Móveis da casa" onClick={() => {}} />
-                    <FastButton text="Móveis da casa" onClick={() => {}} />
-                    <FastButton text="Móveis da casa" onClick={() => {}} />
-                    <FastButton text="Móveis da casa" onClick={() => {}} />
+                {topics.map((topic, index) => (
+                    <FastButton
+                        key={index}
+                        text={topic}
+                        onClick={() => {
+                            setTopic(topic);
+                            handleSubmit();
+                        }}
+                    />
+                ))}
                 </div>
             </div>
         </div>
