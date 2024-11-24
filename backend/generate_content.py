@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from firebase_admin import credentials, initialize_app, firestore
 from crewai import Agent, Task, Crew, LLM
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 from pydantic import BaseModel, EmailStr
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -46,17 +47,24 @@ llm = LLM(
 # Inicialização do FastAPI
 app = FastAPI(title="Content and Image Generator API")
 
-# Modelos Pydantic
 class UserRegistration(BaseModel):
     name: str
     email: EmailStr
     image_url: str
+    age: int
+    experience_level: str  # beginner, intermediated, advanced
+    interesting: str
+    learning_time: int  # 10, 20, 30, 40, 50, +60
 
 class UserResponse(BaseModel):
     id: str
     name: str
     email: str
     image_url: str
+    age: int
+    experience_level: str
+    interesting: str
+    learning_time: int
     created_at: datetime
 
 class ContentGenerationRequest(BaseModel):
@@ -67,12 +75,31 @@ class ImageGenerationRequest(BaseModel):
     collection_id: str
     text_en: str
 
+class UserCheckRequest(BaseModel):
+    email: str
+
 @app.post("/users/register", response_model=UserResponse)
 async def register_user(user: UserRegistration):
     """
-    Registra um novo usuário no sistema.
+    Registra um novo usuário no sistema com campos adicionais.
     """
     try:
+        # Validação do experience_level
+        valid_experience_levels = ["beginner", "intermediated", "advanced"]
+        if user.experience_level.lower() not in valid_experience_levels:
+            raise HTTPException(
+                status_code=400,
+                detail="Nível de experiência deve ser: beginner, intermediated ou advanced"
+            )
+        
+        # Validação do learning_time
+        valid_learning_times = [10, 20, 30, 40, 50, 60]
+        if user.learning_time not in valid_learning_times and user.learning_time <= 60:
+            raise HTTPException(
+                status_code=400,
+                detail="Tempo de aprendizado deve ser: 10, 20, 30, 40, 50 ou 60 (para +60)"
+            )
+        
         # Verifica se já existe um usuário com o mesmo email
         users_ref = db.collection('users')
         existing_users = users_ref.where('email', '==', user.email).get()
@@ -89,6 +116,10 @@ async def register_user(user: UserRegistration):
             "name": user.name,
             "email": user.email,
             "image_url": user.image_url,
+            "age": user.age,
+            "experience_level": user.experience_level.lower(),
+            "interesting": user.interesting,
+            "learning_time": user.learning_time,
             "created_at": datetime.now()
         }
         
@@ -376,6 +407,33 @@ async def generate_content_endpoint(request: ContentGenerationRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/check/user")
+async def check_user_exists(request: UserCheckRequest):
+    """
+    Endpoint para verificar se um usuário existe baseado no email.
+    Retorna true se o usuário existe, false caso contrário.
+    """
+    try:
+        # Busca usuários onde o email corresponde
+        users_ref = db.collection('users')
+        query = users_ref.where('email', '==', request.email).limit(1)
+        docs = query.get()
+        
+        # Se encontrou algum documento, o usuário existe
+        exists = len(list(docs)) > 0
+        
+        return {
+            "exists": exists,
+            "email": request.email
+        }
+        
+    except Exception as e:
+        logger.error(f"Erro ao verificar usuário: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao verificar usuário: {str(e)}"
+        )
 
 @app.post("/generate/image")
 async def generate_image_endpoint(request: ImageGenerationRequest):
