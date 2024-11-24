@@ -1,22 +1,23 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Collection } from "@/types/CollectionTypes";
 
 const WordSearchHistory = () => {
   const router = useRouter();
   const [collections, setCollections] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const API_URL = "http://localhost:8000/content/collections/user/yanoma";
 
   // Função para calcular o tempo decorrido
-  const getTimeAgo = (dateString) => {
+  const getTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
 
     if (diffInMinutes < 60) {
       return `${diffInMinutes} minutos atrás`;
@@ -47,7 +48,7 @@ const WordSearchHistory = () => {
 
       const data = await response.json();
       setCollections(data.collections);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Erro ao buscar coleções:", err);
       setError(err.message);
     } finally {
@@ -56,7 +57,13 @@ const WordSearchHistory = () => {
   };
 
   return (
-    <div className="bg-white rounded-3xl p-8 h-full w-full flex flex-col">
+    <>
+      { isLoading ? (
+        <div className="h-full w-full flex justify-center items-center">
+          <Loader2 size={48} className="animate-spin text-black" />
+        </div>
+      ) : (
+        <div className="bg-white rounded-3xl p-8 h-full w-full flex flex-col">
       <h1 className="text-blue-500 text-2xl font-bold mb-6">
         Histórico
       </h1>
@@ -64,7 +71,7 @@ const WordSearchHistory = () => {
       <div className="flex-1 overflow-y-auto pr-2 h-full" >
         <div className="space-y-4">
           {collections.length > 0 ? (
-            collections.map((collection, index) => (
+            collections.map((collection: Collection, index: number) => (
               <div
                 key={index}
                 onClick={() => router.push(`/pages/history/${collection.collection_id}?page=progress`)}
@@ -100,6 +107,8 @@ const WordSearchHistory = () => {
         </button>
       </div>
     </div>
+      )}
+    </>
   );
 };
 

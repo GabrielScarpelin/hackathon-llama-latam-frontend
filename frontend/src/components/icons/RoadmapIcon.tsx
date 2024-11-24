@@ -6,7 +6,7 @@ export default function RoadmapIcon({ isActive, ...props } : {
     isActive?: boolean;
 }) {
     const baseScreenWidth = 1440;
-    const [screenWidth, setScreenWidth] = useState<number>(window.innerWidth);
+    const [screenWidth, setScreenWidth] = useState<number>(baseScreenWidth);
     useEffect(() => {
         const handleResize = () => {
             setScreenWidth(window.innerWidth);
@@ -25,7 +25,7 @@ export default function RoadmapIcon({ isActive, ...props } : {
     {...props}
 
     style={{
-        transform: `scale(${screenWidth / baseScreenWidth})`,
+        transform: `scale(${screenWidth / baseScreenWidth * 0.6})`,
     }}
   >
     <g fill={isActive ? "#393E41" : "#F6F7EB"} clipPath="url(#a)">

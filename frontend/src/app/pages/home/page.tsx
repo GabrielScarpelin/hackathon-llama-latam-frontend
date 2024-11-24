@@ -8,7 +8,7 @@ export default function Home() {
     const router = useRouter();
     const [topic, setTopic] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
     const [response, setResponse] = useState(null);
 
     const API_URL = "http://127.0.0.1:8000/content/generate/content";
@@ -55,7 +55,7 @@ export default function Home() {
                 router.push(`/pages/history/${data.collection_id}`);
             }
 
-        } catch (err) {
+        } catch (err: any) {
             console.error("Detalhes do erro:", err);
             setError(`Erro ao gerar conteúdo: ${err.message}`);
         } finally {
@@ -76,29 +76,6 @@ export default function Home() {
                         Sobre o que vamos aprender hoje?
                     </h2>
                 </div>
-                <Link href="/profile">
-                    <svg
-                        width="48"
-                        height="48"
-                        viewBox="0 0 48 48"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <g clipPath="url(#clip0_9_175)">
-                            <path
-                                fillRule="evenodd"
-                                clipRule="evenodd"
-                                d="M24 24C18.6804 24 14.3543 19.6944 14.3543 14.4C14.3543 9.10557 18.6804 4.79997 24 4.79997C29.3196 4.79997 33.6457 9.10557 33.6457 14.4C33.6457 19.6944 29.3196 24 24 24ZM33.0622 25.6151C36.8891 22.5503 39.1197 17.5942 38.2998 12.1678C37.3473 5.87264 32.0856 0.835145 25.7339 0.100745C16.9683 -0.914456 9.53146 5.87757 9.53146 14.4C9.53146 18.936 11.6439 22.9775 14.9379 25.6151C6.84512 28.6415 0.937112 35.748 0.0111218 45.3384C-0.123917 46.7568 0.987762 48 2.42015 48C3.64757 48 4.69413 47.0784 4.80265 45.8616C5.76963 35.1504 14.0095 28.8 24 28.8C33.9906 28.8 42.2304 35.1504 43.1974 45.8616C43.3059 47.0784 44.3525 48 45.5799 48C47.0123 48 48.1239 46.7568 47.9889 45.3384C47.0629 35.748 41.1549 28.6415 33.0622 25.6151Z"
-                                fill="black"
-                            />
-                        </g>
-                        <defs>
-                            <clipPath id="clip0_9_175">
-                                <rect width="48" height="48" fill="white" />
-                            </clipPath>
-                        </defs>
-                    </svg>
-                </Link>
             </div>
             <div className="my-auto">
                 <p className="text-lg text-center mb-4">
