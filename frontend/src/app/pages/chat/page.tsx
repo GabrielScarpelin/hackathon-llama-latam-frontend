@@ -3,6 +3,13 @@
 import { Rabbit, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
+
+const WELCOME_MESSAGE = "Olá! Eu sou Cris! Sea assistente virtual e estou aqui para te auxiliar no aprendizado de libras. Pode me fazer qualquer pergunta!";
+
 export default function Page() {
   const [topic, setTopic] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -12,10 +19,17 @@ export default function Page() {
   const [playerGloss, setPlayerGloss] = useState<string | null>(null);
   const [currentPhrase, setCurrentPhrase] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
-  const [message, setMessage] = useState(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [showVLibras, setShowVLibras] = useState(false);
 
   useEffect(() => {
     let playerInstance: any = null;
+
+    // Initial loading timer
+    setTimeout(() => {
+      setShowVLibras(true);
+    }, 5000);
 
     const interval = setInterval(() => {
       // @ts-expect-error - VLibras is not defined in the global scope
@@ -32,6 +46,12 @@ export default function Page() {
           setIsLoaded(true);
           setPlayer(newPlayer);
           newPlayer.toggleSubtitle();
+          // Add welcome message and translate it only after VLibras is loaded
+          setMessages([{
+            role: "assistant",
+            content: WELCOME_MESSAGE
+          }]);
+          newPlayer.translate(WELCOME_MESSAGE);
         });
 
         newPlayer.load(document.getElementById("wrapper"));
@@ -44,6 +64,11 @@ export default function Page() {
         #wrapper {
             width: 60% !important;
             height: 80% !important;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        #wrapper.visible {
+            opacity: 1;
         }
         #wrapper > div {
             width: 100% !important;
@@ -67,57 +92,136 @@ export default function Page() {
     };
   }, []);
 
-  const handleSubmit = async () => {};
+  const handleSubmit = async () => {
+    if (!topic.trim()) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const newUserMessage: Message = {
+        role: "user",
+        content: topic
+      };
+      
+      setMessages(prev => [...prev, newUserMessage]);
+
+      const requestBody = {
+        messages: [{ content: topic }]
+      };
+
+      const response = await fetch('http://localhost:8000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      const newAssistantMessage: Message = {
+        role: "assistant",
+        content: data.response
+      };
+      
+      setMessages(prev => [...prev, newAssistantMessage]);
+
+      if (player) {
+        // @ts-expect-error - the object is never because it's not defined in the global scope
+        player.translate(data.response);
+      }
+
+      setTopic("");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('An unknown error occurred');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="h-full flex flex-col p-6">
-      {/* Main Content */}
       <div className="flex flex-grow overflow-hidden">
         {/* Left - Fixed Boneco */}
-        <div className="w-[50%] flex justify-center items-center">
-          <div id="wrapper" className="h-[100%] w-[100%] bg-black bg-opacity-50 relative">
+        <div className="w-[50%] flex justify-center items-center relative">
+          {!showVLibras && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-50">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-lg font-medium text-purple-500">Carregando VLibras...</p>
+              </div>
+            </div>
+          )}
+          <div 
+            id="wrapper" 
+            className={`h-[100%] w-[100%] bg-black bg-opacity-50 relative ${showVLibras ? 'visible' : ''}`}
+          >
             <span className="controls absolute z-50 bg-[#4A3C8D] text-white items-center gap-2 w-full py-2 px-4 rounded-xl bottom-0 flex justify-between">
-                <RotateCcw size={24} onClick={() => {
-                // @ts-expect-error - the object is never because it's not defined in the global scope
-                if (player?.gloss && player?.gloss === message) {
-                    // @ts-expect-error - the object is never because it's not defined in the global scope
-                    player.repeat();
-                }
-                else {
-                    if (player && message) {
-                    // @ts-expect-error - the object is never because it's not defined in the global scope
-                    player.translate(message);
+              <RotateCcw 
+                size={24} 
+                onClick={() => {
+                  if (messages.length > 0) {
+                    const lastAssistantMessage = messages
+                      .filter(m => m.role === "assistant")
+                      .slice(-1)[0];
+                    if (lastAssistantMessage) {
+                      // @ts-expect-error - the object is never because it's not defined in the global scope
+                      player?.translate(lastAssistantMessage.content);
                     }
-                }
-                }} className='hover:cursor-pointer'/>
-                <div className='flex gap-2 items-center justify-center'>
+                  }
+                }} 
+                className='hover:cursor-pointer'
+              />
+              <div className='flex gap-2 items-center justify-center'>
                 <Rabbit size={24} />
                 <select 
-                    className='p-1 rounded-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
-                    defaultValue={1} 
-                    onChange={(e) => setPlayerSpeed(parseFloat(e.target.value))}
+                  className='p-1 rounded-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
+                  defaultValue={1} 
+                  onChange={(e) => setPlayerSpeed(parseFloat(e.target.value))}
                 >
-                    <option value="0.5" className='text-black'>0.5x</option>
-                    <option value="1" className='text-black'>1x</option>
-                    <option value="1.5" className='text-black'>1.5x</option>
-                    <option value="2" className='text-black'>2x</option>
+                  <option value="0.5" className='text-black'>0.5x</option>
+                  <option value="1" className='text-black'>1x</option>
+                  <option value="1.5" className='text-black'>1.5x</option>
+                  <option value="2" className='text-black'>2x</option>
                 </select>
-                </div>
+              </div>
             </span>
             <span className='subtitle absolute py-2 bottom-16 bg-black bg-opacity-70 text-white z-[200] font-medium px-4 left-1/2 -translate-x-1/2'>
-                {playerGloss?.split(' ')[currentGlossIndex]}
+              {playerGloss?.split(' ')[currentGlossIndex]}
             </span>
           </div>
         </div>
 
         {/* Right - Messages */}
-        <div className="w-[50%] h-full overflow-y-auto p-6 bg-white flex flex-col gap-8">
-          <MessageGroup />
-          <MessageGroup />
-          <MessageGroup />
-          <MessageGroup />
-          <MessageGroup />
-          <MessageGroup />
+        <div className="w-[50%] h-full overflow-y-auto p-6 bg-white flex flex-col gap-4">
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+              <strong className="font-bold">Error: </strong>
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
+          {messages.map((message, index) => (
+            <div key={index} className="">
+              <div className={message.role === "user" ? "sended" : "response"}>
+                <p className={`${
+                  message.role === "user" 
+                    ? "bg-[#E454A4] text-white" 
+                    : "bg-gray-200 text-black"
+                  } py-2 px-4 rounded-lg`}>
+                  <b>{message.role === "user" ? "Você" : "IA"}:</b> {message.content}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -126,10 +230,15 @@ export default function Page() {
         <div className="input rounded-full border-[#656565] border-2 px-4 w-full flex items-center gap-4">
           <input
             type="text"
-            placeholder="Digite o tópico aqui..."
+            placeholder="Vamos aprender juntos..."
             className="border-none outline-none w-full py-2"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !isLoading) {
+                handleSubmit();
+              }
+            }}
           />
           <button
             onClick={handleSubmit}
@@ -158,23 +267,6 @@ export default function Page() {
             )}
           </button>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function MessageGroup() {
-  return (
-    <div className="">
-      <div className="sended mb-2">
-        <p className=" bg-[#E454A4] text-white py-2 px-4 rounded-lg">
-          <b>Você:</b> Olá, tudo bem?
-        </p>
-      </div>
-      <div className="response">
-        <p className=" bg-gray-200 text-black py-2 px-4 rounded-lg">
-            <b>IA:</b> Tudo sim, e você?
-        </p>
       </div>
     </div>
   );

@@ -120,7 +120,9 @@ async def register_user(user: UserRegistration):
             "experience_level": user.experience_level.lower(),
             "interesting": user.interesting,
             "learning_time": user.learning_time,
-            "created_at": datetime.now()
+            "created_at": datetime.now(),
+            "roadmap_level": 0
+
         }
         
         new_user_ref.set(user_data)
@@ -134,6 +136,51 @@ async def register_user(user: UserRegistration):
         raise he
     except Exception as e:
         logger.error(f"Erro ao registrar usuário: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Modelo para o corpo da requisição
+class UpdateRoadmapRequest(BaseModel):
+    roadmap_level: int
+
+@app.put("/users/{user_id}/update-roadmap", response_model=UserResponse)
+async def update_user_roadmap(user_id: str, request: UpdateRoadmapRequest):
+    """
+    Atualiza o nível do roadmap de um usuário existente.
+    """
+    try:
+        # Validação do roadmap_level
+        if request.roadmap_level < 0:
+            raise HTTPException(
+                status_code=400,
+                detail="O roadmap_level deve ser um número inteiro maior ou igual a 0"
+            )
+
+        # Referência ao documento do usuário
+        user_ref = db.collection('users').document(user_id)
+        user_doc = user_ref.get()
+
+        if not user_doc.exists:
+            raise HTTPException(
+                status_code=404,
+                detail="Usuário não encontrado"
+            )
+
+        # Atualizar o roadmap_level
+        user_ref.update({"roadmap_level": request.roadmap_level})
+
+        # Obter os dados atualizados do usuário
+        updated_user_doc = user_ref.get()
+        updated_user_data = updated_user_doc.to_dict()
+
+        return {
+            "id": user_id,
+            **updated_user_data
+        }
+
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Erro ao atualizar roadmap_level do usuário {user_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/users/{user_id}", response_model=UserResponse)
