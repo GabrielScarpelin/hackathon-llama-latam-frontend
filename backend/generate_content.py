@@ -10,6 +10,8 @@ from firebase_admin import credentials, initialize_app, firestore
 from crewai import Agent, Task, Crew, LLM
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
+from fastapi.middleware.cors import CORSMiddleware
 
 # Configuração de logging
 logging.basicConfig(
@@ -46,6 +48,18 @@ llm = LLM(
 app = FastAPI(title="Content and Image Generator API")
 
 # Modelos Pydantic
+class UserRegistration(BaseModel):
+    name: str
+    email: EmailStr
+    image_url: str
+
+class UserResponse(BaseModel):
+    id: str
+    name: str
+    email: str
+    image_url: str
+    created_at: datetime
+
 class ContentGenerationRequest(BaseModel):
     topic: str
     user_id: str
@@ -56,6 +70,70 @@ class ImageGenerationRequest(BaseModel):
 
 class UserCheckRequest(BaseModel):
     email: str
+
+@app.post("/users/register", response_model=UserResponse)
+async def register_user(user: UserRegistration):
+    """
+    Registra um novo usuário no sistema.
+    """
+    try:
+        # Verifica se já existe um usuário com o mesmo email
+        users_ref = db.collection('users')
+        existing_users = users_ref.where('email', '==', user.email).get()
+        
+        if len(list(existing_users)) > 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Um usuário com este email já existe"
+            )
+        
+        # Cria novo documento de usuário
+        new_user_ref = users_ref.document()
+        user_data = {
+            "name": user.name,
+            "email": user.email,
+            "image_url": user.image_url,
+            "created_at": datetime.now()
+        }
+        
+        new_user_ref.set(user_data)
+        
+        return {
+            "id": new_user_ref.id,
+            **user_data
+        }
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Erro ao registrar usuário: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/users/{user_id}", response_model=UserResponse)
+async def get_user(user_id: str):
+    """
+    Obtém informações de um usuário específico.
+    """
+    try:
+        user_ref = db.collection('users').document(user_id)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists:
+            raise HTTPException(
+                status_code=404,
+                detail="Usuário não encontrado"
+            )
+        
+        return {
+            "id": user_id,
+            **user_doc.to_dict()
+        }
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Erro ao buscar usuário: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 class ImageGenerator:
     def __init__(self):
