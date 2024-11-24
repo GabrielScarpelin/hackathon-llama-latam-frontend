@@ -388,7 +388,7 @@ async def generate_image_endpoint(request: ImageGenerationRequest):
 @app.get("/collection/{user_id}/{collection_id}")
 async def get_collection_with_subcollections(user_id: str, collection_id: str):
     """
-    Rota para obter uma coleção específica por ID, associada a um usuário, incluindo as subcoleções.
+    Rota para obter uma coleção específica por ID, associada a um usuário, incluindo subcoleções formatadas.
     """
     try:
         # Referência ao documento da coleção específica
@@ -405,29 +405,34 @@ async def get_collection_with_subcollections(user_id: str, collection_id: str):
         # Dados do documento principal
         collection_data = collection_doc.to_dict()
 
+        # Estrutura final para subcoleções organizadas
+        words = []
+        sentences = []
+
         # Buscar subcoleções do documento
-        subcollections_data = {}
-        subcollections = collection_ref.collections()  # Obtém todas as subcoleções
+        subcollections = collection_ref.collections()
         for subcollection in subcollections:
-            subcollection_name = subcollection.id
             subcollection_docs = subcollection.stream()
 
-            # Extração de dados dos documentos na subcoleção
-            subcollections_data[subcollection_name] = [
-                {"doc_id": doc.id, **doc.to_dict()} for doc in subcollection_docs
-            ]
+            # Classificar itens nas subcoleções
+            for doc in subcollection_docs:
+                doc_data = {"id": doc.id, **doc.to_dict()}
+                if doc_data.get("tipo") == "palavra":
+                    words.append(doc_data)
+                elif doc_data.get("tipo") == "frase":
+                    sentences.append(doc_data)
 
-        # Retornar dados do documento principal e suas subcoleções
+        # Retornar dados do documento principal com palavras e frases categorizadas
         return {
             "collection_id": collection_id,
             **collection_data,
-            "subcollections": subcollections_data,
+            "words": words,
+            "sentences": sentences,
         }
 
     except Exception as e:
         logger.error(f"Erro ao buscar coleção {collection_id} para o usuário {user_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.get("/collections/user/{user_id}")
 async def get_user_collections(user_id: str):
