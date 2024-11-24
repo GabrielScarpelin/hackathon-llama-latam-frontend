@@ -17,8 +17,6 @@ export default function Page() {
   const [playerSpeed, setPlayerSpeed] = useState(1);
   const [currentGlossIndex, setCurrentGlossIndex] = useState(0);
   const [playerGloss, setPlayerGloss] = useState<string | null>(null);
-  const [currentPhrase, setCurrentPhrase] = useState("");
-  const [isLoaded, setIsLoaded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showVLibras, setShowVLibras] = useState(false);
@@ -29,6 +27,7 @@ export default function Page() {
     // Initial loading timer
     setTimeout(() => {
       setShowVLibras(true);
+      setIsLoading(false);
     }, 5000);
 
     const interval = setInterval(() => {
@@ -42,7 +41,7 @@ export default function Page() {
 
         playerInstance = newPlayer;
 
-        newPlayer.on("response:glosa", function (progressValue: number, glossLength: number) {
+        newPlayer.on("response:glosa", function (progressValue: number) {
             setCurrentGlossIndex(progressValue - 1);
             if (newPlayer.gloss && newPlayer.gloss !== playerGloss) {
                 setPlayerGloss(newPlayer.gloss);
@@ -50,7 +49,6 @@ export default function Page() {
         });
 
         newPlayer.on("load", function () {
-          setIsLoaded(true);
           setPlayer(newPlayer);
           newPlayer.toggleSubtitle();
           // Add welcome message and translate it only after VLibras is loaded
@@ -154,6 +152,13 @@ export default function Page() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (player && playerSpeed) {
+      // @ts-expect-error - the object is never because it's not defined in the global scope
+      player.setSpeed(playerSpeed);
+    }
+  }, [player, playerSpeed]);
 
   return (
     <div className="h-full flex flex-col p-6">
