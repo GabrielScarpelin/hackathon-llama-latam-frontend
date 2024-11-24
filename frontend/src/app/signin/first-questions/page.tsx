@@ -1,15 +1,65 @@
-export default function Page() {
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+
+export default async function Page({
+    searchParams,
+} : {
+    searchParams?: { [key: string]: string | string[] | undefined };
+}) {
+
+    const session = await auth();
+
+    console.log(session);
+
     return (
         <div className="w-full h-full bg-[#4A3C8D] flex items-center justify-center">
             <div className="w-full max-w-[400px] bg-white p-6 rounded-xl shadow-lg max-h-[95%] overflow-y-scroll">
                 {/* Título da página */}
-                <h1 className="text-2xl font-bold text-[#4A3C8D] mb-2">Perguntas Iniciais</h1>
+                <h1 className="text-2xl font-bold text-[#4A3C8D] mb-2">Bem vindo, {searchParams?.name}!</h1>
+                <p>Email de cadastro: {searchParams?.email}</p>
+                <h1 className="text-2xl font-bold text-[#4A3C8D] mb-2 mt-2">Perguntas Iniciais</h1>
                 <p className="text-gray-600 mb-4">
                     Essas perguntas ajudarão a nossa plataforma a criar um plano divertido e eficiente para ensinar Libras ao seu filho!
                 </p>
 
                 {/* Formulário */}
-                <form action="/signin/second-questions" method="POST" className="flex flex-col gap-6 mt-4">
+                <form action={async (data: FormData) => {
+                    "use server";
+                    console.log("Formulário submetido");
+                    console.log(data);
+
+                    const age = data.get("age");
+                    const level = data.get("level");
+                    const interesting = data.get("interesting");
+                    const learning = data.get("learning");
+
+                    const response = await fetch("http://localhost:8000/content/users/register", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json"
+                        },
+                        body: JSON.stringify({
+                            name: searchParams?.name,
+                            email: searchParams?.email,
+                            image_url: searchParams?.image,
+                            age: parseInt(age as string),
+                            experience_level: level,
+                            interesting: interesting,
+                            learning_time: parseInt(learning as string)
+                        })
+                    });
+                    const responseData = await response.json();
+
+                    if (!response.ok) {
+                        console.error("Erro ao enviar dados:", responseData.detail);
+                        redirect("/signin?error=register");
+                    }
+
+                    console.log("Dados enviados com sucesso:", responseData);
+                    redirect("/signin?success=register");
+
+                }} className="flex flex-col gap-6 mt-4">
                     {/* Idade */}
                     <div>
                         <label htmlFor="age" className="block text-sm font-medium text-gray-700">
@@ -37,7 +87,7 @@ export default function Page() {
                             className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#4A3C8D]"
                         >
                             <option value="beginner">Não, é iniciante</option>
-                            <option value="intermediate">Sim, conhece o básico</option>
+                            <option value="intermediated">Sim, conhece o básico</option>
                             <option value="advanced">Sim, já conhece bastante</option>
                         </select>
                     </div>

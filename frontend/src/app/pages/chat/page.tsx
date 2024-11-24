@@ -12,7 +12,7 @@ const WELCOME_MESSAGE = "Olá! Eu sou Cris! Sea assistente virtual e estou aqui 
 
 export default function Page() {
   const [topic, setTopic] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [player, setPlayer] = useState(null);
   const [playerSpeed, setPlayerSpeed] = useState(1);
   const [currentGlossIndex, setCurrentGlossIndex] = useState(0);
@@ -41,6 +41,13 @@ export default function Page() {
         });
 
         playerInstance = newPlayer;
+
+        newPlayer.on("response:glosa", function (progressValue: number, glossLength: number) {
+            setCurrentGlossIndex(progressValue - 1);
+            if (newPlayer.gloss && newPlayer.gloss !== playerGloss) {
+                setPlayerGloss(newPlayer.gloss);
+            }
+        });
 
         newPlayer.on("load", function () {
           setIsLoaded(true);
