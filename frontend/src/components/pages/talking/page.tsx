@@ -12,6 +12,7 @@ const TalkingPage = () => {
   const [playerSpeed, setPlayerSpeed] = useState(1);
   const [playerGloss, setPlayerGloss] = useState<string | null>(null);
   const [currentGlossIndex, setCurrentGlossIndex] = useState(0);
+  const [isMessageFetched, setIsMessageFetched] = useState(false); // New state to prevent duplicate calls
   const collectionContext = useCollection();
   const queryParams = useSearchParams();
   const params = useParams();
@@ -45,7 +46,7 @@ const TalkingPage = () => {
           console.log("VLibras carregado");
           setIsLoaded(true);
           setPlayer(newPlayer);
-          newPlayer.toggleSubtitle();
+          newPlayer.disableSubtitle();
         });
 
         // Evento de progresso da animação
@@ -123,10 +124,10 @@ const TalkingPage = () => {
       const aiMap = {
         "worddynamic": "palavras",
         "sentencedynamic": "frases",
-        "gamedynamics": "jogos"
-      }
+        "gamedynamic": "jogos"
+      };
       const response = await fetch('http://localhost:8000/introductions/generate-introduction', {
-        method: "POST", 
+        method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
@@ -134,28 +135,33 @@ const TalkingPage = () => {
           fase: aiMap[queryParams.get("nextPhase") as keyof typeof aiMap],
           tema: collectionContext?.collection?.title
         })
-      })
+      });
       if (!response.ok) {
-        console.log(response)
         throw new Error("Failed to fetch AI generated message");
       }
       const data = await response.json();
-      return data;
+      return data.introducao;
     } catch (error) {
-      console.log('Failed to generate AI message:', error);
-      return { introducao: mockPhrases[queryParams.get("nextPhase") as keyof typeof mockPhrases] }
+      console.error('Failed to generate AI message:', error);
+      return mockPhrases[queryParams.get("nextPhase") as keyof typeof mockPhrases];
     }
-
-  }
+  };
 
   useEffect(() => {
-    if (message) return;
-    if (!collectionContext.collection) return;
+    if (!isMessageFetched && collectionContext.collection) {
+      setIsMessageFetched(true); // Prevent duplicate calls
+      handleAiGeneratedMessage().then((fetchedMessage) => {
+        setMessage(fetchedMessage);
+      });
+    }
+  }, [collectionContext.collection, isMessageFetched]); // Consolidated dependency array
 
-    handleAiGeneratedMessage().then((data) => {
-      setMessage(data.introducao)
-    })
-  }, [collectionContext.collection])
+  useEffect(() => {
+    if (player && message) {
+      // @ts-expect-error - the object is never because it's not defined in the global scope
+      player.translate(message);
+    }
+  }, [message, player]);
 
   useEffect(() => {
     if (!player) return;

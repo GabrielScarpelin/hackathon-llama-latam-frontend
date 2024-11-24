@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import FastButton from "@/components/FastButtonAi";
 
 export default function Home() {
     const router = useRouter();
@@ -79,8 +80,7 @@ export default function Home() {
             </div>
             <div className="my-auto">
                 <p className="text-lg text-center mb-4">
-                    Gere conteúdos dinamicamente com inteligência artificial
-                    para turbinar o seu aprendizado e o do seu filho em libras.
+                    Aprenda Libras de forma personalizada e divertida! Com inteligência artificial, criamos conteúdos dinâmicos que se adaptam ao ritmo e interesses do seu filho, tornando o aprendizado mais eficiente e envolvente.
                 </p>
                 <div className="input rounded-full border-[#656565] border-2 px-4">
                     <div className="flex w-full gap-4">
@@ -118,6 +118,16 @@ export default function Home() {
                             )}
                         </button>
                     </div>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2 mt-4">
+                    <FastButton text="Móveis da casa" onClick={() => {}} />
+                    <FastButton text="Móveis da casa" onClick={() => {}} />
+                    <FastButton text="Móveis da casa" onClick={() => {}} />
+                    <FastButton text="Móveis da casa" onClick={() => {}} />
+                    <FastButton text="Móveis da casa" onClick={() => {}} />
+                    <FastButton text="Móveis da casa" onClick={() => {}} />
+                    <FastButton text="Móveis da casa" onClick={() => {}} />
+                    <FastButton text="Móveis da casa" onClick={() => {}} />
                 </div>
             </div>
         </div>

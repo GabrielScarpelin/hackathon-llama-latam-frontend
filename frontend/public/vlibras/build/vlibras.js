@@ -239,6 +239,18 @@
 	  this.playerManager.toggleSubtitle();
 	};
 
+	Player.prototype.disableSubtitle = function () {
+	  this.playerManager.disableSubtitle();
+	};
+
+	Player.prototype.enableSubtitle = function () {
+	  this.playerManager.enableSubtitle();
+	};
+
+	Player.prototype.getSubtitleState = function () {
+	  return this.playerManager.getSubtitleState();
+	};
+
 	Player.prototype.setRegion = function (region) {
 	  this.region = region;
 	  this.playerManager.setBaseUrl(config.dictionaryUrl + region + "/");
@@ -1326,6 +1338,20 @@
 	  this.subtitle = !this.subtitle;
 	  this._send("setSubtitlesState", toInt(this.subtitle));
 	};
+
+	PlayerManagerAdapter.prototype.getSubtitleState = function () {
+	  return this.subtitle;
+	};
+
+	PlayerManagerAdapter.prototype.disableSubtitle = function () {
+	  this.subtitle = false;
+	  this._send("setSubtitlesState", 0);
+	}
+
+	PlayerManagerAdapter.prototype.enableSubtitle = function () {
+	  this.subtitle = true;
+	  this._send("setSubtitlesState", 1);
+	}
 
 	PlayerManagerAdapter.prototype.playWellcome = function () {
 	  this._send("playWellcome");
