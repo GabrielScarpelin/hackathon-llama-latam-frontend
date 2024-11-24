@@ -1,6 +1,7 @@
 import ProgressPage from "@/components/pages/progress/page";
 import SentenceDynamicsPage from "@/components/pages/sentencedynamics/page";
 import TalkingPage from "@/components/pages/talking/page";
+import MemoryGame from "@/components/pages/wordsearch/page";
 import WordDynamicsPage from "@/components/pages/wordynamics/page";
 
 
@@ -26,6 +27,9 @@ export default function CollectionPage({
 
         else if (searchParams.page === "talking") {
             return <TalkingPage />;
+        }
+        else if (searchParams.page === "gamedynamic") {
+            return <MemoryGame />
         }
     }
 
