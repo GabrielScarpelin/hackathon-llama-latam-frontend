@@ -222,3 +222,43 @@ async def api_parent_roadmap(user_info: Interest):
         # return {"success": True, "roadmap": roadmap_data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+   
+@app.get("/api/roadmaps/{user_id}")
+async def get_roadmaps(user_id: str):
+    try:
+        user_ref = db.collection("users").document(user_id)
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            raise HTTPException(status_code=404, detail=f"Usuário não encontrado: {user_id}")
+
+        roadmaps_ref = user_ref.collection("roadmaps")
+        roadmaps = roadmaps_ref.stream()
+        
+        # Extrai apenas os tópicos de cada roadmap
+        topics = []
+        for doc in roadmaps:
+            roadmap = doc.to_dict()
+            topics.extend(roadmap.get("topics", []))  # Adiciona os tópicos ao array
+
+        return topics
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    
+    ##API para apagar roadmaps salvos
+@app.delete("/api/roadmaps/{user_id}")
+async def delete_roadmaps(user_id: str):
+    try:
+        user_ref = db.collection("users").document(user_id)
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            raise HTTPException(status_code=404, detail=f"Usuário não encontrado: {user_id}")
+
+        roadmaps_ref = user_ref.collection("roadmaps")
+        roadmaps = roadmaps_ref.stream()
+        for doc in roadmaps:
+            doc.reference.delete()
+
+        return {"success": True, "message": "Roadmaps apagados com sucesso."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
