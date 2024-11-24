@@ -66,6 +66,7 @@ class UserResponse(BaseModel):
     interesting: str
     learning_time: int
     created_at: datetime
+    roadmap_level: int
 
 class ContentGenerationRequest(BaseModel):
     topic: str
@@ -77,6 +78,13 @@ class ImageGenerationRequest(BaseModel):
 
 class UserCheckRequest(BaseModel):
     email: str
+
+class UpdateRoadmapRequest(BaseModel):
+    roadmap_level: int
+
+class RoadMapResponse(BaseModel):
+    id: str
+    roadmap_level: int
 
 @app.post("/users/register", response_model=UserResponse)
 async def register_user(user: UserRegistration):
@@ -142,7 +150,7 @@ async def register_user(user: UserRegistration):
 class UpdateRoadmapRequest(BaseModel):
     roadmap_level: int
 
-@app.put("/users/{user_id}/update-roadmap", response_model=UserResponse)
+@app.put("/users/{user_id}/update-roadmap", response_model=RoadMapResponse)
 async def update_user_roadmap(user_id: str, request: UpdateRoadmapRequest):
     """
     Atualiza o nível do roadmap de um usuário existente.
@@ -635,6 +643,36 @@ async def get_user_collections(user_id: str):
 
     except Exception as e:
         logger.error(f"Erro ao buscar coleções para o usuário {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/users/{user_id}/roadmap-level")
+async def get_user_roadmap_level(user_id: str):
+    """
+    Obtém o nível do roadmap de um usuário específico.
+    """
+    try:
+        # Referência ao documento do usuário
+        user_ref = db.collection('users').document(user_id)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists:
+            raise HTTPException(
+                status_code=404,
+                detail="Usuário não encontrado"
+            )
+        
+        user_data = user_doc.to_dict()
+        roadmap_level = user_data.get('roadmap_level', 0)  # Retorna 0 se não existir
+        
+        return {
+            "user_id": user_id,
+            "roadmap_level": roadmap_level
+        }
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Erro ao buscar roadmap level do usuário: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
