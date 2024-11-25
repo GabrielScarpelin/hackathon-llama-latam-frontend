@@ -1,7 +1,8 @@
 "use client";
 
-import { CollectionProvider, useCollection } from "@/contexts/ContentContext";
+import { useCollection } from "@/contexts/ContentContext";
 import { Collection } from "@/types/CollectionTypes";
+import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -14,15 +15,17 @@ export default function Layout({
     const params = useParams();
     const collectionContext = useCollection();
     const router = useRouter();
-
-    const userId = "yanoma"
+    const { data: session, status } = useSession();
     const collectionId = params.id;
     const handleGetCollection = async (collectionId: string) => {
+        if (session === null) return;
+
         if (collectionId) {
-            const response = await fetch(`http://localhost:8000/content/collection/${userId}/${collectionId}`, {
+            const response = await fetch(`http://localhost:8000/content/collection/${session?.user.id}/${collectionId}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${session.jwt}`,
                 },
             })
             if (!response.ok) {
@@ -44,7 +47,7 @@ export default function Layout({
                 router.push("/pages/home");
             })
         }
-    }, [collectionId]);
+    }, [collectionId, status]);
 
 
 

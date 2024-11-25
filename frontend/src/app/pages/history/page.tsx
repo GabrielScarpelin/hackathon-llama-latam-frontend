@@ -4,14 +4,16 @@ import React, { useState, useEffect } from "react";
 import { Loader2, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Collection } from "@/types/CollectionTypes";
+import { useSession } from "next-auth/react";
+import CONFIG from "@/constants/config";
+import { Session } from "next-auth";
 
 const WordSearchHistory = () => {
   const router = useRouter();
   const [collections, setCollections] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data, status } = useSession();
 
-  const API_URL = "http://localhost:8000/content/collections/user/yanoma";
 
   // Função para calcular o tempo decorrido
   const getTimeAgo = (dateString: string) => {
@@ -34,13 +36,26 @@ const WordSearchHistory = () => {
 
   // Buscar coleções ao carregar a página
   useEffect(() => {
-    fetchCollections();
-  }, []);
+    if (status === "unauthenticated") {
+      router.push("/signin");
+      return;
+    }
+    if (!data) return;
 
-  const fetchCollections = async () => {
+    fetchCollections(data);
+  }, [status]);
+
+  const fetchCollections = async (session: Session) => {
     try {
       setIsLoading(true);
-      const response = await fetch(API_URL);
+      const response = await fetch(`${CONFIG.serverUrl}/content/collections/user/${session.user.id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": `Bearer ${session.jwt}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`Erro na requisição: ${response.status}`);
@@ -50,7 +65,6 @@ const WordSearchHistory = () => {
       setCollections(data.collections);
     } catch (err: any) {
       console.error("Erro ao buscar coleções:", err);
-      setError(err.message);
     } finally {
       setIsLoading(false);
     }

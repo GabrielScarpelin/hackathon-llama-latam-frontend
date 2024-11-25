@@ -6,7 +6,6 @@ import WordDynamicsPage from "@/components/pages/wordynamics/page";
 
 
 export default function CollectionPage({
-    params,
     searchParams,
 } : {
     params: { slug: string };

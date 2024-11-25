@@ -1,16 +1,20 @@
 from fastapi import FastAPI, Request, HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
+import os
 import jwt
+from dotenv import load_dotenv
 from typing import List
 import logging
 
 logger = logging.getLogger(__name__)
 
+load_dotenv()
+
 class AuthMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: FastAPI,
-        secret_key: str = "9c1185a5c5e9fc54612808977ee8f548b2258d31",
+        secret_key: str = os.environ.get("SECRET_KEY_JWT"),
         algorithm: str = "HS256",
         exclude_paths: List[str] = None
     ):
@@ -22,7 +26,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/redoc",
             "/openapi.json",
             "/users/register",
-            "/check/user"
+            "/check/user",
+            "/api/parent-roadmap"
         ]
 
     async def dispatch(self, request: Request, call_next):
@@ -106,6 +111,7 @@ app.add_middleware(
         "/openapi.json",
         "/users/register",
         "/check/user",
+        "/api/parent-roadmap"
         # Adicione aqui outros caminhos que não precisam de autenticação
     ]
 )
@@ -138,7 +144,7 @@ def create_jwt_token(user_id: str) -> str:
     
     return jwt.encode(
         payload,
-        "9c1185a5c5e9fc54612808977ee8f548b2258d31",
+        os.environ.get("SECRET_KEY_JWT"),
         algorithm="HS256"
     )
 

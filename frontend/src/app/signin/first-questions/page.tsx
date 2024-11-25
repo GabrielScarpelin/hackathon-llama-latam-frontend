@@ -33,7 +33,7 @@ export default async function Page({
                     const interesting = data.get("interesting");
                     const learning = data.get("learning");
 
-                    const response = await fetch("http://localhost:8000/content/users/register", {
+                    const response = await fetch(process.env.SERVER_URL+"/content/users/register", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -49,7 +49,20 @@ export default async function Page({
                             learning_time: parseInt(learning as string)
                         })
                     });
+
                     const responseData = await response.json();
+
+                    const responseRoadmap = await fetch(process.env.SERVER_URL+"/roadmaps/api/parent-roadmap", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json"
+                        },
+                        body: JSON.stringify({
+                            user_id: responseData.id,
+                            interest: interesting,
+                        })
+                    });
 
                     if (!response.ok) {
                         console.error("Erro ao enviar dados:", responseData.detail);

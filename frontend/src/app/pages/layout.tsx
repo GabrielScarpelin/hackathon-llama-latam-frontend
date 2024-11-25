@@ -12,14 +12,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { data, status, update } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/signin");
     }
-    console.log(data)
   }, [status])
   return (
     <div className="bg-[#4A3C8D] h-full w-full p-6 flex">

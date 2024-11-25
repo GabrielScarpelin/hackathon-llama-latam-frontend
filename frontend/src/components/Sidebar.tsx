@@ -2,10 +2,6 @@
 
 import { usePathname } from "next/navigation";
 
-import HistoryIcon from "./icons/HistoryIcon";
-import HomeIcon from "./icons/HomeIcon";
-import RoadmapIcon from "./icons/RoadmapIcon";
-import SettingsIcon from "./icons/SettingsIcon";
 import SidebarItem from "./SidebarItem";
 import { History, House, Map, MessageCircle, UserRound } from "lucide-react";
 

@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import FastButton from "@/components/FastButtonAi";
+import { useSession } from "next-auth/react";
+import CONFIG from "@/constants/config";
 
 export default function Home() {
     const topics = [
@@ -20,11 +21,11 @@ export default function Home() {
     const [topic, setTopic] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [response, setResponse] = useState(null);
-
-    const API_URL = "http://127.0.0.1:8000/content/generate/content";
+    const { data: session } = useSession();
 
     const handleSubmit = async () => {
+        if (session === null) return;
+
         if (!topic || typeof topic !== 'string' || !topic.trim()) {
             setError("Por favor, digite um tópico válido!");
             return;
@@ -34,21 +35,18 @@ export default function Home() {
             setError(null);
             setIsLoading(true);
 
-            const requestBody = {
-                topic: String(topic.trim()),
-                user_id: "yanoma"
-            };
 
-            console.log('Enviando requisição para:', API_URL);
-            console.log('Payload:', requestBody);
-
-            const response = await fetch(API_URL, {
+            const response = await fetch(`${CONFIG.serverUrl}/content/generate/content`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Accept": "application/json"
+                    "Accept": "application/json",
+                    "Authorization": `Bearer ${session.jwt}`,
                 },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify({
+                    topic: topic.trim(),
+                    user_id: session.user.id,
+                })
             });
 
             if (!response.ok) {
@@ -58,7 +56,6 @@ export default function Home() {
             }
 
             const data = await response.json();
-            setResponse(data);
             console.log("Dados recebidos:", data);
             
             // Redirecionamento após receber os dados com sucesso
@@ -140,6 +137,9 @@ export default function Home() {
                         }}
                     />
                 ))}
+                </div>
+                <div>
+                    {error && <p className="text-red-600 mt-4">{error}</p>}
                 </div>
             </div>
         </div>

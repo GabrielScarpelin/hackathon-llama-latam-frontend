@@ -1,11 +1,5 @@
 import { auth } from "@/auth";
-
-const user = {
-    name: "Yanomã",
-    email: "joao.silva@example.com",
-    age: 28,
-    
-}
+import Image from "next/image";
 
 export default async function Page() {
     const session = await auth()
@@ -14,7 +8,7 @@ export default async function Page() {
             <div className="w-1/2 h-auto p-4 rounded-lg shadow-md bg-p">
             <div className="flex items-center space-x-4 mb-6">
                 {/* Ícone ou Avatar */}
-                <img src={session?.user?.image} className="w-12 h-12 rounded-full bg-pink-500"/>
+                <Image src={session?.user?.image ? session?.user?.image : ""} className="w-12 h-12 rounded-full bg-pink-500" alt="Foto do seu usuário"/>
                 <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-600 mb-1">
                     Nome:

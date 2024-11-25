@@ -5,6 +5,8 @@ import { ArrowRight, Loader2, Rabbit, RotateCcw } from 'lucide-react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useCollection } from '@/contexts/ContentContext';
+import CONFIG from '@/constants/config';
+import { useSession } from 'next-auth/react';
 
 const TalkingPage = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -14,6 +16,7 @@ const TalkingPage = () => {
   const [currentGlossIndex, setCurrentGlossIndex] = useState(0);
   const [isMessageFetched, setIsMessageFetched] = useState(false); // New state to prevent duplicate calls
   const [awaitingInitialLoad, setAwaitingInitialLoad] = useState(true);
+  const { data: session, status } = useSession();
   const collectionContext = useCollection();
   const queryParams = useSearchParams();
   const params = useParams();
@@ -51,7 +54,7 @@ const TalkingPage = () => {
         });
 
         // Evento de progresso da animação
-        newPlayer.on("response:glosa", function (progressValue: number, glossLength: number) {
+        newPlayer.on("response:glosa", function (progressValue: number) {
           console.log("Progresso da animação:", progressValue);
           setCurrentGlossIndex(progressValue - 1);
           if (newPlayer.gloss && newPlayer.gloss !== playerGloss) {
@@ -123,16 +126,20 @@ const TalkingPage = () => {
 
 
   const handleAiGeneratedMessage = async () => {
+    if (!session) {
+      return;
+    }
     try {
       const aiMap = {
         "worddynamic": "palavras",
         "sentencedynamic": "frases",
         "gamedynamic": "jogos"
       };
-      const response = await fetch('http://localhost:8000/introductions/generate-introduction', {
+      const response = await fetch(CONFIG.serverUrl+'/introductions/generate-introduction', {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.jwt}`
         },
         body: JSON.stringify({
           fase: aiMap[queryParams.get("nextPhase") as keyof typeof aiMap],
@@ -151,13 +158,13 @@ const TalkingPage = () => {
   };
 
   useEffect(() => {
-    if (!isMessageFetched && collectionContext.collection) {
+    if (!isMessageFetched && collectionContext.collection && status === "authenticated") {
       setIsMessageFetched(true); // Prevent duplicate calls
       handleAiGeneratedMessage().then((fetchedMessage) => {
         setMessage(fetchedMessage);
       });
     }
-  }, [collectionContext.collection, isMessageFetched]); // Consolidated dependency array
+  }, [collectionContext.collection, isMessageFetched, status]); // Consolidated dependency array
 
   useEffect(() => {
     if (player && message) {

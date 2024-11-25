@@ -1,6 +1,8 @@
 'use client';
+import CONFIG from '@/constants/config';
 import { useCollection } from '@/contexts/ContentContext';
 import { Loader2, Rabbit, RotateCcw } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -16,8 +18,8 @@ export default function WordDynamicsPage() {
   const [currentImage, setCurrentImage] = useState('');
   const [currentGlossIndex, setCurrentGlossIndex] = useState(0);
   const [playerGloss, setPlayerGloss] = useState<string | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [awaitingInitialLoad, setAwaitingInitialLoad] = useState(true);
+  const { data: session, status } = useSession();
   const router = useRouter();
 
 
@@ -40,13 +42,12 @@ export default function WordDynamicsPage() {
         // Configura os eventos antes de carregar
         newPlayer.on("load", function () {
           console.log("VLibras carregado");
-          setIsLoaded(true);
           setPlayer(newPlayer);
           newPlayer.toggleSubtitle();
         });
 
         // Evento de progresso da animação
-        newPlayer.on("response:glosa", function (progressValue: number, glossLength: number) {
+        newPlayer.on("response:glosa", function (progressValue: number) {
           console.log("Progresso da animação:", progressValue);
           setCurrentGlossIndex(progressValue - 1);
           if (newPlayer.gloss && newPlayer.gloss !== playerGloss) {
@@ -107,11 +108,14 @@ export default function WordDynamicsPage() {
   }, []);
 
   const handleGenerateImage = async (texto_en: string) => {
+    if (!session) return;
+
     try {
-      const response = await fetch('http://localhost:8000/content/generate/image', {
+      const response = await fetch(CONFIG.serverUrl+'/content/generate/image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          "Authorization": `Bearer ${session?.jwt}`,
         },
         body: JSON.stringify({
           collection_id: collectionContext.collection?.collection_id,
@@ -154,8 +158,10 @@ export default function WordDynamicsPage() {
   };
 
   useEffect(() => {
-    loadNewWord();
-  }, [currentIndex, collectionContext.collection]);
+    if (status === "authenticated") {
+      loadNewWord();
+    }
+  }, [currentIndex, collectionContext.collection, status]);
 
   useEffect(() => {
     // @ts-expect-error - the object is never because it's not defined in the global scope

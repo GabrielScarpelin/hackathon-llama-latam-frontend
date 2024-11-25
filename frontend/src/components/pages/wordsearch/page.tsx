@@ -25,7 +25,6 @@ export default function MemoryGame() {
   const [isPlayerLoaded, setIsPlayerLoaded] = useState(false);
   const [awaitingAnimationEnd, setAwaitingAnimationEnd] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
   const [isCompletingInitialLoad, setIsCompletingInitialLoad] = useState(true);
   const router = useRouter();
 
@@ -229,7 +228,6 @@ export default function MemoryGame() {
   const handleTaskCompletion = () => {
     // Aqui você pode adicionar a lógica para finalizar a tarefa
     console.log("Tarefa concluída!");
-    setIsCompleted(false);
     setShowCelebration(false);
     router.push("/pages/home");
   };
@@ -239,7 +237,6 @@ export default function MemoryGame() {
     // Verifica se todas as cartas foram encontradas
     if (matchedPairs.length === cards.length && cards.length > 0) {
       setShowCelebration(true);
-      setIsCompleted(true);
       
       // Anima os emojis caindo
       const interval = setInterval(() => {

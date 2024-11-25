@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Loader2, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import CONFIG from "@/constants/config";
 
 interface Point {
   id: number;
@@ -19,23 +21,27 @@ const RoadmapLibras = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [handleClickWaitingResponse, setHandleClickWaitingResponse] = useState(false);
+  const { data: session, status } = useSession();
   const pointsPerView = 5;
 
-  const API_URL_GENERATE = "http://localhost:8000/roadmaps/api/roadmaps/yanoma";
-  const API_USER_LEVEL = "http://localhost:8000/content/users/yanoma/roadmap-level";
-  const API_UPDATE_LEVEL = "http://localhost:8000/content/users/yanoma/update-roadmap";
 
   useEffect(() => {
     fetchUserRoadmapLevel();
     fetchPoints();
-  }, []);
+  }, [status]);
 
   const fetchUserRoadmapLevel = async () => {
+    if (status === "loading") return;
+    
+    if (session === null) return;
+
     try {
-      const response = await fetch(API_USER_LEVEL, {
+      const response = await fetch(`${CONFIG.serverUrl}/content/users/${session?.user.id}/roadmap-level`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": `Bearer ${session?.jwt}`,
         },
       });
   
@@ -56,10 +62,12 @@ const RoadmapLibras = () => {
   const fetchPoints = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(API_URL_GENERATE, {
+
+      const response = await fetch(`${CONFIG.serverUrl}/roadmaps/api/roadmaps/${session?.user.id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.jwt}`,
         },
       });
 
@@ -115,7 +123,7 @@ const RoadmapLibras = () => {
   
       // Atualiza o roadmap_level e desbloqueia o próximo ponto, se aplicável
       if (pointId === currentLevel) {
-        const updateResponse = await fetch(API_UPDATE_LEVEL, {
+        const updateResponse = await fetch(`${CONFIG.serverUrl}/content/users/${session?.user.id}/update-roadmap`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -138,21 +146,21 @@ const RoadmapLibras = () => {
       const selectedPoint = points.find((point) => point.id === pointId);
   
       if (selectedPoint) {
-        const requestBody = {
-          topic: selectedPoint.label.trim(),
-          user_id: "yanoma",
-        };
 
         setIsLoading(true);
         setHandleClickWaitingResponse(true);
 
-        const response = await fetch("http://127.0.0.1:8000/content/generate/content", {
+        const response = await fetch(`${CONFIG.serverUrl}/content/users/${session?.user.id}/update-roadmap`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Accept: "application/json",
+            "Accept": "application/json",
+            "Authorization": `Bearer ${session?.jwt}`,
           },
-          body: JSON.stringify(requestBody),
+          body: JSON.stringify({
+            topic: selectedPoint.label.trim(),
+            user_id: session?.user.id,
+          }),
         });
 
         setHandleClickWaitingResponse(false);
@@ -171,7 +179,7 @@ const RoadmapLibras = () => {
           throw new Error("Resposta inválida do servidor: ID da coleção ausente.");
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err.message)
     }
   };

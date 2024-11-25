@@ -1,4 +1,4 @@
-import { auth, signIn } from "@/auth";
+import { signIn } from "@/auth";
 import GoogleIcon from "@/components/icons/GoogleIcon";
 
 export default async function SigninPage({

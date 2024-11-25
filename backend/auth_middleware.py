@@ -10,7 +10,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: FastAPI,
-        secret_key: str = "9c1185a5c5e9fc54612808977ee8f548b2258d31",
+        secret_key: str = os.getenv("SECRET_KEY_JWT"),
         algorithm: str = "HS256",
         exclude_paths: List[str] = None
     ):

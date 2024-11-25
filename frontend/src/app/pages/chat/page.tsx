@@ -1,6 +1,8 @@
 "use client";
 
+import CONFIG from "@/constants/config";
 import { Rabbit, RotateCcw } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 interface Message {
@@ -8,7 +10,7 @@ interface Message {
   content: string;
 }
 
-const WELCOME_MESSAGE = "Olá! Eu sou Cris! Sea assistente virtual e estou aqui para te auxiliar no aprendizado de libras. Pode me fazer qualquer pergunta!";
+const WELCOME_MESSAGE = "Olá! Eu sou Cris! Seu assistente virtual e estou aqui para te auxiliar no aprendizado de libras. Pode me fazer qualquer pergunta!";
 
 export default function Page() {
   const [topic, setTopic] = useState("");
@@ -19,6 +21,7 @@ export default function Page() {
   const [playerGloss, setPlayerGloss] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const { data: session } = useSession();
   const [showVLibras, setShowVLibras] = useState(false);
 
   useEffect(() => {
@@ -88,17 +91,25 @@ export default function Page() {
 
     return () => {
       clearInterval(interval);
-      if (player) {
-        // @ts-expect-error - the object is never because it's not defined in the global scope
-        player.stop();
-        // @ts-expect-error - the object is never because it's not defined in the global scope
-        player.gloss = null;
+      if (playerInstance) {
+        // Remove os listeners quando o componente for desmontado
+        playerInstance.removeAllListeners("animation:progress");
+        playerInstance.removeAllListeners("animation:play");
+        playerInstance.removeAllListeners("animation:end");
+        playerInstance.removeAllListeners("load");
+        playerInstance.removeAllListeners("error");
+        playerInstance.stop();
+        playerInstance.gloss = null;
       }
+
+      playerInstance = null;
       document.head.removeChild(style);
     };
   }, []);
 
   const handleSubmit = async () => {
+    if (!session) return;
+    
     if (!topic.trim()) return;
 
     try {
@@ -116,10 +127,11 @@ export default function Page() {
         messages: [{ content: topic }]
       };
 
-      const response = await fetch('http://localhost:8000/chatbot/chat', {
+      const response = await fetch(CONFIG.serverUrl+'/chatbot/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          "Authorization": `Bearer ${session.jwt}`,
         },
         body: JSON.stringify(requestBody)
       });

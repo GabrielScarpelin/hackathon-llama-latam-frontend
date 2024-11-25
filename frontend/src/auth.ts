@@ -21,9 +21,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     maxAge: 24 * 60 * 60, // 24 hours
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, profile }) {
       try {
-        const response = await fetch("http://localhost:8000/content/check/user", {
+        const response = await fetch(process.env.SERVER_URL+"/content/check/user", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
