@@ -364,10 +364,11 @@ async def generate_content(topic: str, user_id: str):
         # Task para frases
         sentence_task = Task(
             description=f"""
-            Gere EXATAMENTE um JSON com até 5 frases expositivas e visuais usando estas palavras em português e inglês. Essa frase deve ser obrigatóriamente composta por uma palavra e um verbo
+            Gere EXATAMENTE um JSON com até 5 frases expositivas e visuais, que seja fácil de entender a partir da visualização de uma imagem gerada com essa frase, usando estas palavras em português e inglês. Essa frase deve ser obrigatóriamente composta por no máximo 5 palavras, considerando artigos.
             Palavras PT: {', '.join(words_pt)}
             Palavras EN: {', '.join(words_en)}
-            As frases devem ser simples, evite abstrações e descrição de cenários não visuais, e ajudar as crianças a imaginar o que está sendo descrito. AS FRASES DEVEM TER NO MAXIMO 3 PALAVRAS.
+            As frases devem ser simples, evite abstrações e descrição de cenários não visuais, e ajudar as crianças a imaginar o que está sendo descrito. Garanta que sempre tenha um verbo na frase diferente de é.
+            EX: cachorro correndo, escrevendo com um lapis, pulando corda, passear com cachorro. 
             Use este formato: 
 
             {{
