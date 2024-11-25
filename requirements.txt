@@ -1,7 +1,0 @@
-fastapi
-uvicorn
-aiohttp
-aiosqlite
-python-dotenv
-crewai
-sambanova
