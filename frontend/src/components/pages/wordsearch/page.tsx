@@ -248,16 +248,24 @@ export default function MemoryGame() {
         emoji.style.fontSize = '2rem';
         emoji.style.zIndex = '1000';
         emoji.style.animation = 'fall 3s linear';
+        emoji.classList.add('emoji-dropping');
         document.body.appendChild(emoji);
 
         emoji.addEventListener('animationend', () => {
           document.body.removeChild(emoji);
         });
+
       }, 300);
 
       setTimeout(() => {
         clearInterval(interval);
       }, 3000);
+    }
+
+    return () => {
+      document.querySelectorAll('.emoji-dropping').forEach((emoji) => {
+        document.body.removeChild(emoji);
+      });
     }
   }, [matchedPairs, cards]);
 

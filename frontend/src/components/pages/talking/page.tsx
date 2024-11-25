@@ -24,7 +24,7 @@ const TalkingPage = () => {
   const mockPhrases = {
     "worddynamic": "Olá, meu nome é Cristiano. Estou aqui para te ajudar a aprender libras. Agora, nós vamos começar com uma dinâmica de palavras com base no tema x",
     "sentencedynamic": "Excelente! Agora que você já aprendeu algumas palavras, vamos montar frases com elas. Vamos lá?",
-    "gamedynamics": "Parabéns! Você já aprendeu bastante. Agora é hora de jogar e testar seus conhecimentos. Vamos lá?"
+    "gamedynamic": "Parabéns! Você já aprendeu bastante. Agora é hora de jogar e testar seus conhecimentos. Vamos lá?"
   }
 
   const [player, setPlayer] = useState(null);
@@ -183,7 +183,7 @@ const TalkingPage = () => {
   const phaseMap = {
     "worddynamic": "Dinâmica de palavras",
     "sentencedynamic": "Dinâmica de frases",
-    "gamedynamics": "Jogos"
+    "gamedynamic": "Jogos"
   }
 
   return (

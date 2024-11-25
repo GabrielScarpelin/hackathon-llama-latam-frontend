@@ -19,7 +19,6 @@ export default function Layout({
     const collectionId = params.id;
     const handleGetCollection = async (collectionId: string) => {
         if (session === null) return;
-
         if (collectionId) {
             const response = await fetch(`http://localhost:8000/content/collection/${session?.user.id}/${collectionId}`, {
                 method: "GET",
@@ -36,14 +35,17 @@ export default function Layout({
         }
     }
     useEffect(() => {
+        if (status === "unauthenticated") return;
+        if (status === "loading") return;
+
         if (collectionId) {
             handleGetCollection(collectionId as string).then((collection) => {
                 const collectionData = collection as Collection;
 
                 console.log(collectionData);
                 collectionContext.setCollection(collectionData);
-            }).catch(() => {
-                console.error("Failed to fetch collection");
+            }).catch((err) => {
+                console.error("Failed to fetch collection", err);
                 router.push("/pages/home");
             })
         }

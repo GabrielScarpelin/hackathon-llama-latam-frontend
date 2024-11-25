@@ -194,16 +194,16 @@ export default function WordDynamicsPage() {
   return (
     <div className='w-full h-full relative'>
       {awaitingInitialLoad && (
-        <div className="h-full w-full flex justify-center items-center flex-col gap-4">
+        <div className="h-full w-full flex justify-center items-center flex-col gap-4 absolute left-0 top-0">
           <div className="animate-bounce">
             <Rabbit size={48} className='text-[#4A3C8D]' />
           </div>
           <p className='font-medium'>Um segundo! Nossos coelhos estão procurando as palavras...</p>
         </div>
       )}
-      <div className={`rounded-3xl p-6 w-full flex flex-col h-full ${awaitingInitialLoad ? 'hidden' : ''}`}
+      <div className={`rounded-3xl p-6 w-full flex flex-col h-full ${awaitingInitialLoad ? 'invisible' : 'visible'}`}
       >
-        <h1 className="text-2xl font-bold text-center mb-1">Dinâmica de palavras</h1>
+        <h1 className="text-2xl font-bold text-center mb-1">Dinâmica das frases</h1>
 
         <div className="flex justify-center">
           <span 

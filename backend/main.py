@@ -109,9 +109,9 @@ app.add_middleware(
         "/docs",
         "/redoc",
         "/openapi.json",
-        "/users/register",
-        "/check/user",
-        "/api/parent-roadmap"
+        "/content/users/register",
+        "/content/check/user",
+        "/roadmaps/api/parent-roadmap"
         # Adicione aqui outros caminhos que não precisam de autenticação
     ]
 )

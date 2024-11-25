@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
     }, {
       protocol: "https",
       hostname: "preview.redd.it",
+    },{
+      protocol: "https",
+      hostname: "lh3.googleusercontent.com"
     }]
   }
 };
