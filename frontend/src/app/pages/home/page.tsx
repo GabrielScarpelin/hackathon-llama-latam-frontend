@@ -133,7 +133,6 @@ export default function Home() {
                         text={topic}
                         onClick={() => {
                             setTopic(topic);
-                            handleSubmit();
                         }}
                     />
                 ))}

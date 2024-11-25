@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 
 import SidebarItem from "./SidebarItem";
 import { History, House, Map, MessageCircle, UserRound } from "lucide-react";
+import LogoIcon from "./icons/Logo";
 
 // Mapear rotas para nomes e ícones
 const routeMap = [
@@ -40,9 +41,7 @@ export default function Sidebar() {
   return (
     <div className="h-full w-1/5 flex flex-col items-center">
       {/* Logo */}
-      <div className="px-4 py-2 bg-white rounded-lg">
-        <p>Logo</p>
-      </div>
+      <LogoIcon  className="scale-75"/>
 
       {/* Renderizar rotas dinamicamente */}
       <div className="items relative mt-20 flex flex-col gap-4 w-full">

@@ -4,10 +4,10 @@ import GoogleIcon from "@/components/icons/GoogleIcon";
 export default async function SigninPage({
     searchParams,
 }: {
-    searchParams?: { [key: string]: string | string[] | undefined };
+    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-    const error = searchParams?.error ?? null;
-    const success = searchParams?.success ?? null;
+    const error = (await searchParams)?.error ?? null;
+    const success = (await searchParams)?.success ?? null;
 
     return (
         <div className="bg-[#4A3C8D] w-full h-full flex items-center justify-center flex-col">

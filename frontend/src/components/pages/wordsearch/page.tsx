@@ -361,7 +361,16 @@ export default function MemoryGame() {
                 className={`absolute inset-0 col-span-2 md:col-span-3 bg-white rounded-xl shadow-2xl transition-opacity duration-300 flex items-center justify-center text-4xl text-center px-2
                   ${isExpanded && cards[expandedCard]?.type === "image" ? 'opacity-100 visible z-10' : 'opacity-0 invisible z-0'}`}
               >
-                {isExpanded && cards[expandedCard]?.type === "image" && cards[expandedCard]?.imageUrl || cards[expandedCard]?.text}
+                {isExpanded && cards[expandedCard]?.type === "image" && cards[expandedCard]?.imageUrl === "" ? (
+                  <p>{cards[expandedCard]?.text}</p>
+                ) : (
+                  <Image
+                    src={cards[expandedCard]?.imageUrl}
+                    alt={cards[expandedCard]?.text}
+                    width={400}
+                    height={400}
+                  />
+                )}
               </div>
 
               {/* Game Cards */}

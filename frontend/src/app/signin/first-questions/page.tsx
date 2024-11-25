@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 export default async function Page({
     searchParams,
 } : {
-    searchParams?: { [key: string]: string | string[] | undefined };
+    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
 
     const session = await auth();
@@ -15,8 +15,8 @@ export default async function Page({
         <div className="w-full h-full bg-[#4A3C8D] flex items-center justify-center">
             <div className="w-full max-w-[400px] bg-white p-6 rounded-xl shadow-lg max-h-[95%] overflow-y-scroll">
                 {/* Título da página */}
-                <h1 className="text-2xl font-bold text-[#4A3C8D] mb-2">Bem vindo, {searchParams?.name}!</h1>
-                <p>Email de cadastro: {searchParams?.email}</p>
+                <h1 className="text-2xl font-bold text-[#4A3C8D] mb-2">Bem vindo, {(await searchParams)?.name}!</h1>
+                <p>Email de cadastro: {(await searchParams)?.email}</p>
                 <h1 className="text-2xl font-bold text-[#4A3C8D] mb-2 mt-2">Perguntas Iniciais</h1>
                 <p className="text-gray-600 mb-4">
                     Essas perguntas ajudarão a nossa plataforma a criar um plano divertido e eficiente para ensinar Libras ao seu filho!
@@ -40,9 +40,9 @@ export default async function Page({
                             "Accept": "application/json"
                         },
                         body: JSON.stringify({
-                            name: searchParams?.name,
-                            email: searchParams?.email,
-                            image_url: searchParams?.image,
+                            name: (await searchParams)?.name,
+                            email: (await searchParams)?.email,
+                            image_url: (await searchParams)?.image,
                             age: parseInt(age as string),
                             experience_level: level,
                             interesting: interesting,

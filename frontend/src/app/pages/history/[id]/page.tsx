@@ -5,29 +5,28 @@ import MemoryGame from "@/components/pages/wordsearch/page";
 import WordDynamicsPage from "@/components/pages/wordynamics/page";
 
 
-export default function CollectionPage({
+export default async function CollectionPage({
     searchParams,
 } : {
-    params: { slug: string };
-    searchParams?: { [key: string]: string | string[] | undefined };
+    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }){
     if (searchParams) {
-        if (searchParams.page === "progress") {
+        if ((await searchParams).page === "progress") {
             return <ProgressPage />;
         }
     
-        else if (searchParams.page === "worddynamic") {
+        else if ((await searchParams).page === "worddynamic") {
             return <WordDynamicsPage />;
         }
     
-        else if (searchParams.page === "sentencedynamic") {
+        else if ((await searchParams).page === "sentencedynamic") {
             return <SentenceDynamicsPage />;
         }
 
-        else if (searchParams.page === "talking") {
+        else if ((await searchParams).page === "talking") {
             return <TalkingPage />;
         }
-        else if (searchParams.page === "gamedynamic") {
+        else if ((await searchParams).page === "gamedynamic") {
             return <MemoryGame />
         }
     }
