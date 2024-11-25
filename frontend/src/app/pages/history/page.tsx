@@ -17,21 +17,35 @@ const WordSearchHistory = () => {
 
   // Função para calcular o tempo decorrido
   const getTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes} minutos atrás`;
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      
+      // Ajusta para o fuso horário do Brasil (UTC-3)
+      const brasiliaDate = new Date(date.getTime() + (3 * 60 * 60 * 1000));
+      
+      const diffInMilliseconds = now.getTime() - brasiliaDate.getTime();
+      const diffInMinutes = Math.floor(diffInMilliseconds / (1000 * 60));
+  
+      if (diffInMinutes < 1) {
+        return 'Agora mesmo';
+      }
+      
+      if (diffInMinutes < 60) {
+        return diffInMinutes === 1 ? '1 minuto atrás' : `${diffInMinutes} minutos atrás`;
+      }
+  
+      const diffInHours = Math.floor(diffInMinutes / 60);
+      if (diffInHours < 24) {
+        return diffInHours === 1 ? '1 hora atrás' : `${diffInHours} horas atrás`;
+      }
+  
+      const diffInDays = Math.floor(diffInHours / 24);
+      return diffInDays === 1 ? '1 dia atrás' : `${diffInDays} dias atrás`;
+    } catch (error) {
+      console.error('Erro ao processar a data:', error);
+      return 'Data inválida';
     }
-
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) {
-      return `${diffInHours} horas atrás`;
-    }
-
-    const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays} dias atrás`;
   };
 
   // Buscar coleções ao carregar a página
