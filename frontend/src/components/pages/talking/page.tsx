@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Rabbit, RotateCcw } from 'lucide-react';
+import { ArrowRight, Loader2, Rabbit, RotateCcw } from 'lucide-react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useCollection } from '@/contexts/ContentContext';
@@ -13,6 +13,7 @@ const TalkingPage = () => {
   const [playerGloss, setPlayerGloss] = useState<string | null>(null);
   const [currentGlossIndex, setCurrentGlossIndex] = useState(0);
   const [isMessageFetched, setIsMessageFetched] = useState(false); // New state to prevent duplicate calls
+  const [awaitingInitialLoad, setAwaitingInitialLoad] = useState(true);
   const collectionContext = useCollection();
   const queryParams = useSearchParams();
   const params = useParams();
@@ -64,7 +65,9 @@ const TalkingPage = () => {
         });
 
         newPlayer.on("animation:end", () => {
-          console.log("Animação finalizada");
+          if (awaitingInitialLoad) {
+            setAwaitingInitialLoad(false);
+          }
         });
 
         newPlayer.on("error", (error: any) => {
@@ -177,65 +180,65 @@ const TalkingPage = () => {
   }
 
   return (
-    <div className="relative flex flex-col items-center justify-center p-2 h-full gap-2">
-      {/* Balão de fala */}
-      <div className="bg-white p-6 rounded-lg shadow-lg max-w-full mb-8 relative font-medium">
-        <div className="text-base">{message}</div>
-        {/* Triângulo do balão */}
-        <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-black drop-shadow-xl"></div>
-      </div>
-
-      {/* Container do VLibras */}
-      <div 
-          className="w-full h-2/3 rounded-2xl flex justify-center items-center relative" 
-          id="wrapper"
-        >
-          <span className="controls absolute z-50 bg-[#4A3C8D] text-white items-center gap-2 w-1/3 py-2 px-4 rounded-xl bottom-0 flex justify-between">
-            <RotateCcw size={24} onClick={() => {
-              // @ts-expect-error - the object is never because it's not defined in the global scope
-              if (player?.gloss && player?.gloss === message) {
-                // @ts-expect-error - the object is never because it's not defined in the global scope
-                player.repeat();
-              }
-              else {
-                if (player && message) {
-                  // @ts-expect-error - the object is never because it's not defined in the global scope
-                  player.translate(message);
-                }
-              }
-            }} className='hover:cursor-pointer'/>
-            <div className='flex gap-2 items-center justify-center'>
-              <Rabbit size={24} />
-              <select 
-                className='p-1 rounded-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
-                defaultValue={1} 
-                onChange={(e) => setPlayerSpeed(parseFloat(e.target.value))}
-              >
-                <option value="0.5" className='text-black'>0.5x</option>
-                <option value="1" className='text-black'>1x</option>
-                <option value="1.5" className='text-black'>1.5x</option>
-                <option value="2" className='text-black'>2x</option>
-              </select>
-            </div>
-          </span>
-          <Link href={`${params.id}?page=${queryParams.get("nextPhase")}`}
-            className="absolute bottom-0 flex gap-2 items-center justify-center right-0 z-[100] p-3 rounded-full text-white font-bold bg-[#E454A4]"
-          >
-            Ir para {phaseMap[queryParams.get("nextPhase") as keyof typeof phaseMap]}
-            <ArrowRight size={24} />
-          </Link>
-          <span className='subtitle absolute py-2 bottom-16 bg-black bg-opacity-70 text-white z-[200] font-medium px-4'>
-            {playerGloss?.split(' ')[currentGlossIndex]}
-          </span>
-        </div>
-
-      {/* Indicador de carregamento */}
-      {!isLoaded && (
-        <div className="absolute top-4 right-4 text-sm text-gray-500">
-          Carregando VLibras...
+    <>
+      { (awaitingInitialLoad || !isLoaded) && (
+        <div className='w-full h-full flex flex-col items-center justify-center gap-4'>
+          <Loader2 className='text-[#4A3C8D] animate-spin' size={48} />
         </div>
       )}
-    </div>
+      <div className={`relative flex flex-col items-center justify-center p-2 h-full gap-2 ${ (awaitingInitialLoad || !isLoaded) ? "hidden" : "block"}`}>
+        {/* Balão de fala */}
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-full mb-8 relative font-medium">
+          <div className="text-base">{message}</div>
+          {/* Triângulo do balão */}
+          <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-black drop-shadow-xl"></div>
+        </div>
+
+        {/* Container do VLibras */}
+        <div 
+            className="w-full h-2/3 rounded-2xl flex justify-center items-center relative" 
+            id="wrapper"
+          >
+            <span className="controls absolute z-50 bg-[#4A3C8D] text-white items-center gap-2 w-1/3 py-2 px-4 rounded-xl bottom-0 flex justify-between">
+              <RotateCcw size={24} onClick={() => {
+                // @ts-expect-error - the object is never because it's not defined in the global scope
+                if (player?.gloss && player?.gloss === message) {
+                  // @ts-expect-error - the object is never because it's not defined in the global scope
+                  player.repeat();
+                }
+                else {
+                  if (player && message) {
+                    // @ts-expect-error - the object is never because it's not defined in the global scope
+                    player.translate(message);
+                  }
+                }
+              }} className='hover:cursor-pointer'/>
+              <div className='flex gap-2 items-center justify-center'>
+                <Rabbit size={24} />
+                <select 
+                  className='p-1 rounded-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
+                  defaultValue={1} 
+                  onChange={(e) => setPlayerSpeed(parseFloat(e.target.value))}
+                >
+                  <option value="0.5" className='text-black'>0.5x</option>
+                  <option value="1" className='text-black'>1x</option>
+                  <option value="1.5" className='text-black'>1.5x</option>
+                  <option value="2" className='text-black'>2x</option>
+                </select>
+              </div>
+            </span>
+            <Link href={`${params.id}?page=${queryParams.get("nextPhase")}`}
+              className="absolute bottom-0 flex gap-2 items-center justify-center right-0 z-[100] p-3 rounded-full text-white font-bold bg-[#E454A4]"
+            >
+              Ir para {phaseMap[queryParams.get("nextPhase") as keyof typeof phaseMap]}
+              <ArrowRight size={24} />
+            </Link>
+            <span className='subtitle absolute py-2 bottom-16 bg-black bg-opacity-70 text-white z-[200] font-medium px-4'>
+              {playerGloss?.split(' ')[currentGlossIndex]}
+            </span>
+          </div>
+      </div>
+    </>
   );
 };
 

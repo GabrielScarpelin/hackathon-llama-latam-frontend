@@ -71,7 +71,10 @@ const WordSearchHistory = () => {
       <div className="flex-1 overflow-y-auto pr-2 h-full" >
         <div className="space-y-4">
           {collections.length > 0 ? (
-            collections.map((collection: Collection, index: number) => (
+            collections.sort((a: Collection, b: Collection) => {
+              // Ordena as coleções por data de criação
+              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            }).map((collection: Collection, index: number) => (
               <div
                 key={index}
                 onClick={() => router.push(`/pages/history/${collection.collection_id}?page=progress`)}

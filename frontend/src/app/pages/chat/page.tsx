@@ -24,12 +24,6 @@ export default function Page() {
   useEffect(() => {
     let playerInstance: any = null;
 
-    // Initial loading timer
-    setTimeout(() => {
-      setShowVLibras(true);
-      setIsLoading(false);
-    }, 5000);
-
     const interval = setInterval(() => {
       // @ts-expect-error - VLibras is not defined in the global scope
       if (typeof VLibras !== "undefined") {
@@ -48,9 +42,16 @@ export default function Page() {
             }
         });
 
+        newPlayer.on("animation:end", function () {
+          if (!showVLibras) {
+            setShowVLibras(true);
+            setIsLoading(false);
+          }
+        })
+
         newPlayer.on("load", function () {
           setPlayer(newPlayer);
-          newPlayer.toggleSubtitle();
+          newPlayer.disableSubtitle();
           // Add welcome message and translate it only after VLibras is loaded
           setMessages([{
             role: "assistant",
@@ -166,7 +167,7 @@ export default function Page() {
         {/* Left - Fixed Boneco */}
         <div className="w-[50%] flex justify-center items-center relative">
           {!showVLibras && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-50">
+            <div className="absolute inset-0 flex items-center justify-center rounded-md bg-opacity-50">
               <div className="flex flex-col items-center gap-4">
                 <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
                 <p className="text-lg font-medium text-purple-500">Carregando VLibras...</p>
@@ -175,7 +176,7 @@ export default function Page() {
           )}
           <div 
             id="wrapper" 
-            className={`h-[100%] w-[100%] bg-black bg-opacity-50 relative ${showVLibras ? 'visible' : ''}`}
+            className={`h-[100%] w-[100%] bg-black bg-opacity-50 relative ${showVLibras ? 'visible' : 'invisible'}`}
           >
             <span className="controls absolute z-50 bg-[#4A3C8D] text-white items-center gap-2 w-full py-2 px-4 rounded-xl bottom-0 flex justify-between">
               <RotateCcw 
@@ -229,7 +230,7 @@ export default function Page() {
                     ? "bg-[#E454A4] text-white" 
                     : "bg-gray-200 text-black"
                   } py-2 px-4 rounded-lg`}>
-                  <b>{message.role === "user" ? "Você" : "IA"}:</b> {message.content}
+                  <b>{message.role === "user" ? "Você" : "Cris"}:</b> {message.content}
                 </p>
               </div>
             </div>
