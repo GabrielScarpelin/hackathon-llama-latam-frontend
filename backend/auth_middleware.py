@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, HTTPException
-from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi.middleware.base import BaseHTTPMiddleware
 import jwt
 from typing import List
 import logging
@@ -84,69 +84,3 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 status_code=500,
                 content={"detail": "Internal server error during authentication"}
             )
-        
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-import uvicorn
-from generate_introductions import app as introductions_app
-from generate_roadmap import app as roadmap_app
-from generate_content import app as content_app
-from generate_chatbot import app as chatbot_app
-from fastapi.middleware.cors import CORSMiddleware
-
-# Cria o app principal
-app = FastAPI()
-
-# Configuração do middleware de autenticação
-app.add_middleware(
-    AuthMiddleware,
-    exclude_paths=[
-        "/docs",
-        "/redoc",
-        "/openapi.json",
-        "/users/register",
-        "/check/user",
-        # Adicione aqui outros caminhos que não precisam de autenticação
-    ]
-)
-
-# Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Inclui os roteadores de todos os módulos
-app.include_router(chatbot_app.router, prefix="/chatbot")
-app.include_router(introductions_app.router, prefix="/introductions")
-app.include_router(roadmap_app.router, prefix="/roadmaps")
-app.include_router(content_app.router, prefix="/content")
-
-# Helper para criar tokens JWT (pode ser útil em suas rotas de login)
-def create_jwt_token(user_id: str) -> str:
-    from datetime import datetime, timedelta
-    import jwt
-    
-    payload = {
-        'sub': user_id,
-        'exp': datetime.utcnow() + timedelta(days=1),
-        'iat': datetime.utcnow()
-    }
-    
-    return jwt.encode(
-        payload,
-        "9c1185a5c5e9fc54612808977ee8f548b2258d31",
-        algorithm="HS256"
-    )
-
-# Exemplo de endpoint protegido que pode acessar os dados do usuário
-@app.get("/protected-example")
-async def protected_example(request: Request):
-    # Dados do usuário estão disponíveis em request.state.user
-    return {"user_data": request.state.user}
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
