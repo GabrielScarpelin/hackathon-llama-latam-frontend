@@ -27,7 +27,7 @@ export default function ProgressPage(){
                             <ProgressCard title="VAMOS MONTAR FRASES?" current={(() => {
                                 return collectionContext.collection.sentences.filter((word) => word.url).length
                             })()} total={collectionContext.collection.sentences.length} gradient="from-[#5EA6FA] to-[#0BB5D6]" progressBarColor="bg-[#E94F37]" href={`${params.id}?page=talking&nextPhase=sentencedynamic`}/>
-                            <ProgressCard title="HORA DE JOGAR E TESTAR SEUS CONHECIMENTOS" current={58} total={82} gradient="from-[#FA923D] to-[#EF4643]" href={`${params.id}?page=talking&nextPhase=gamedynamic`}/>
+                            <ProgressCard title="HORA DE JOGAR E TESTAR SEUS CONHECIMENTOS" current={0} total={0} gradient="from-[#FA923D] to-[#EF4643]" href={`${params.id}?page=talking&nextPhase=gamedynamic`}/>
                         </div>
                     </div>
                 ) : (
