@@ -127,6 +127,7 @@ const RoadmapLibras = () => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.jwt}`,
           },
           body: JSON.stringify({ roadmap_level: pointId + 1 }),
         });
@@ -150,7 +151,7 @@ const RoadmapLibras = () => {
         setIsLoading(true);
         setHandleClickWaitingResponse(true);
 
-        const response = await fetch(`${CONFIG.serverUrl}/content/users/${session?.user.id}/update-roadmap`, {
+        const response = await fetch(`${CONFIG.serverUrl}/content/generate/content`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

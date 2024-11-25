@@ -51,7 +51,7 @@ export default async function Page({
                     });
 
                     const responseData = await response.json();
-
+                    console.log(responseData);
                     const responseRoadmap = await fetch(process.env.SERVER_URL+"/roadmaps/api/parent-roadmap", {
                         method: "POST",
                         headers: {
@@ -64,7 +64,7 @@ export default async function Page({
                         })
                     });
 
-                    if (!response.ok) {
+                    if (!response.ok || !responseRoadmap.ok) {
                         console.error("Erro ao enviar dados:", responseData.detail);
                         redirect("/signin?error=register");
                     }

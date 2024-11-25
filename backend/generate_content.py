@@ -315,6 +315,45 @@ async def generate_content(topic: str, user_id: str):
                 status_code=404,
                 detail=f"Usuário não encontrado: {user_id}"
             )
+        
+        # Verifica se já existe uma coleção com o mesmo tópico para este usuário
+        collections_ref = user_ref.collection('collections')
+        existing_collections = collections_ref.where('topic', '==', topic.lower().strip()).get()
+        
+        # Se encontrar uma coleção existente, retorna ela
+        for collection in existing_collections:
+            collection_data = collection.to_dict()
+            
+            # Busca as palavras e frases da coleção existente
+            images_ref = collections_ref.document(collection.id).collection('images')
+            images_docs = images_ref.stream()
+            
+            words_content = []
+            sentences_content = []
+            
+            for doc in images_docs:
+                doc_data = doc.to_dict()
+                if doc_data['tipo'] == 'palavra':
+                    words_content.append({
+                        "id": doc.id,
+                        **doc_data
+                    })
+                elif doc_data['tipo'] == 'frase':
+                    sentences_content.append({
+                        "id": doc.id,
+                        **doc_data
+                    })
+            
+            return {
+                "collection_id": collection.id,
+                "title": collection_data["title"],
+                "topic": collection_data["topic"],
+                "created_at": collection_data["created_at"],
+                "words": words_content,
+                "sentences": sentences_content,
+                "is_existing": True
+            }
+        
             
         # Cria nova coleção para o usuário
         collections_ref = user_ref.collection('collections').document()
@@ -322,7 +361,7 @@ async def generate_content(topic: str, user_id: str):
         collection_data = {
             "title": f"Coleção de {topic}",
             "created_at": datetime.now(),
-            "topic": topic
+            "topic": topic.lower().strip()
         }
         collections_ref.set(collection_data)
         collection_id = collections_ref.id
