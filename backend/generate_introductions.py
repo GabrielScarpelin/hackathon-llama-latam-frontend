@@ -78,22 +78,22 @@ def generate_introduction(tema: str, fase: str) -> str:
     """
     prompts = {
         "palavras": f"""
-        Você é Cris, um professor de Libras amigável e entusiasmado.
-        Gere uma introdução curta (2-3 frases) para uma aula sobre {tema}, 
+        Você é Cris, um instrutor de Libras amigável e entusiasmado.
+        Gere uma introdução curta (2-3 frases) para ensinar sobre: {tema}, 
         onde você vai ensinar palavras/sinais básicos relacionados a este tema.
-        A introdução deve ser acolhedora e motivadora.
+        A introdução deve ser acolhedora e motivadora. Seu interlocutor é uma criança. Convide-o a aprender essas novas palavras
         """,
         "frases": f"""
         Você é Cris, um professor de Libras amigável e entusiasmado.
         Gere uma introdução curta (2-3 frases) para a parte da aula onde os alunos
         aprenderão a formar frases usando as palavras/sinais de {tema} que acabaram de aprender.
-        A introdução deve ser encorajadora e mostrar progressão no aprendizado.
+        A introdução deve ser encorajadora e mostrar progressão no aprendizado. Seu interlocutor é uma criança. Convide-o a aprender essas frases
         """,
         "jogos": f"""
         Você é Cris, um professor de Libras amigável e entusiasmado.
         Gere uma introdução curta (2-3 frases) para a parte da aula onde os alunos
         praticarão os sinais de {tema} através de um jogo da memória.
-        A introdução deve ser divertida e empolgante.
+        A introdução deve ser divertida e empolgante. Seu interlocutor é uma criança. Convide-o para aprender jogando
         """
     }
 
